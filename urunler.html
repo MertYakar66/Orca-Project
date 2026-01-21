@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="tr" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORCA | Ürünlerimiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #1a2e1a; color: #fff; font-family: 'Inter', sans-serif; margin:0; }
+        .glass-panel { background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .type-badge { position: absolute; bottom: 10px; right: 10px; font-size: 10px; color: rgba(255,255,255,0.7); }
+        .item-image-box { 
+            background: rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 0.75rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .thumb-canvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            border-radius: 0.75rem; 
+            z-index: 0; 
+        }
+        .variant-controls { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px; 
+            z-index: 10; 
+        }
+        .variant-btn { 
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #aaa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            font-weight: 400;
+        }
+        .variant-btn.active {
+            background: rgba(212,163,115,0.4);
+            border: 2px solid #D4A373;
+            color: #D4A373;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.03em;
+            box-shadow: 0 0 15px rgba(212,163,115,0.4);
+        }
+
+        .variant-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            color: #fff;
+        }
+
+        /* teklif button */
+        .teklif-btn {
+            background: linear-gradient(135deg, #D4A373 0%, #E8B55F 100%);
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            font-size: 0.875rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(212, 163, 115, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            display: inline-block;
+        }
+
+        .teklif-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .teklif-btn:hover::before { left: 100%; }
+
+        .teklif-btn:hover {
+            background: linear-gradient(135deg, #E8B55F 0%, #F5D576 100%);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(212, 163, 115, 0.6);
+        }
+
+        .teklif-btn:active { transform: translateY(-2px) scale(1.02); }
+        .type-badge { 
+            position: absolute; 
+            bottom: 10px; 
+            right: 10px; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
+            z-index: 10; 
+            font-family: monospace; 
+            font-size: 10px; 
+            color: rgba(255,255,255,0.6); 
+        }
+        /* Hide all detail sections by default */
+        .detail-section { display: none; padding: 6rem 1.5rem; position: relative; z-index: 1; }
+
+        /* Show section when it's the target of the URL hash */
+        .detail-section:target { display: flex; }
+
+        /* Show main categories section by default */
+        #main-categories { display: flex; }
+
+        /* Hide main categories when any detail section is targeted */
+        .detail-section:target ~ #main-categories { display: none; }
+
+        /* 3D background container sits behind content */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 0; pointer-events: none; }
+
+        /* Visual accents */
+        h2.text-4xl { text-shadow: 0 0 40px rgba(212,163,115,0.3); }
+        .glass-panel { border-radius: 18px; }
+
+        /* Carousel / product helpers (for consistency with index) */
+        .product-carousel { display: flex; overflow-x: auto; gap: 1rem; scrollbar-width: none; }
+        .product-carousel::-webkit-scrollbar { display: none; }
+        .carousel-item { flex: 0 0 100%; display: flex; flex-direction: column; }
+        .product-carousel-container { position: relative; width: 100%; }
+        .item-text-box { min-height: 80px; padding: 0.75rem; text-align: center; }
+        .item-text-box h4 { text-align: center; }
+        .carousel-item .item-text-box p { font-size: 11px; line-height: 1.4; }
+        .nav-arrow-small { position: absolute; top: 120px; transform: translateY(-50%); width: 32px; height: 32px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: all 0.3s; }
+        .nav-arrow-small.left { left: 10px; }
+        .nav-arrow-small.right { right: 10px; }
+        .nav-arrow-small:hover { background: #D4A373; color: black; }
+    </style>
+    <style>
+        html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+        .glass-panel { background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+        .glass-panel:hover { background: rgba(0,0,0,0.6); border-color: rgba(212,163,115,0.3); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        h5.text-brand-wood { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; color: #D4A373; position: relative; padding-left: 12px; }
+        h5.text-brand-wood::before { content: '▸'; position: absolute; left: 0; color: #D4A373; }
+
+        /* Measurements cards */
+        .measurement-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .measurement-card:hover {
+            background: rgba(0,0,0,0.5);
+            border-color: rgba(212,163,115,0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(212,163,115,0.2);
+        }
+
+        .measurement-image-placeholder {
+            background: linear-gradient(135deg, rgba(212,163,115,0.1) 0%, rgba(212,163,115,0.05) 100%);
+            border: 2px dashed rgba(212,163,115,0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: rgba(212,163,115,0.5);
+            font-size: 14px;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .measurement-image-container {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            height: 200px;
+            max-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .measurement-image {
+            width: 100%;
+            height: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            background: transparent;
+            transition: transform 0.3s ease;
+        }
+
+        .measurement-image:hover {
+            transform: scale(1.05);
+        }
+
+        /* filter buttons */
+        .filter-btn {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .filter-btn:hover { background: rgba(212,163,115,0.2); border-color: rgba(212,163,115,0.4); }
+        .filter-btn.active { background: rgba(212,163,115,0.3); border-color: #D4A373; color: #D4A373; }
+
+        /* Measurement toggle button visuals */
+        .measurement-toggle-btn { transition: all 0.3s ease; }
+        .measurement-toggle-btn.active { background: rgba(212,163,115,0.2); border-color: #D4A373; }
+        .measurement-toggle-btn:hover { background: rgba(212,163,115,0.1); transform: translateY(-2px); }
+
+        /* Multi-image grid for products with multiple images */
+        .measurement-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        /* Custom size card styling (for Kasa products) */
+        .custom-size-card {
+            border: 2px solid rgba(212,163,115,0.4);
+            background: rgba(212,163,115,0.05);
+            min-width: 300px;
+        }
+
+        .custom-size-card .text-brand-wood {
+            font-size: 1.5rem;
+        }
+
+        /* Ensure custom cards take more space in grid */
+        @media (min-width: 1024px) {
+            .custom-size-card {
+                grid-column: span 2;
+            }
+        }
+
+        /* Image container for multiple images */
+        .measurement-images-grid .measurement-image-container {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            height: 160px;
+            max-height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .measurement-images-grid .measurement-image {
+            width: 100%;
+            height: 100%;
+            max-height: 160px;
+            object-fit: contain;
+            background: transparent;
+            transition: transform 0.3s ease;
+        }
+
+        .measurement-images-grid .measurement-image:hover {
+            transform: scale(1.05);
+        }
+
+        /* Info text styling for custom products */
+        .custom-size-card .text-white\/70 {
+            background: rgba(212,163,115,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(212,163,115,0.2);
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <!-- Reused Navigation (copied from index.html) -->
+    <nav class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
+        <a href="index.html" class="flex items-center gap-4">
+            <img src="assets/logo.png" alt="Orca Logo" class="h-28 md:h-32 w-auto object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/826/826963.png'">
+            <div class="text-white font-bold tracking-widest text-xl md:text-2xl font-serif">ORCA ORMAN</div>
+        </a>
+        <div class="hidden md:flex gap-8 text-xs font-semibold tracking-widest text-white items-center">
+            <div class="relative group">
+                <button class="hover:text-brand-wood transition">KURUMSAL <i class="fa-solid fa-chevron-down text-[8px]"></i></button>
+                <div class="absolute top-full left-0 mt-2 w-48 bg-black/90 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <a href="kurumsal-bilgiler.html" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">KURUMSAL BİLGİLER</a>
+                    <a href="index.html#kurumsal" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">MİSYON & VİZYON</a>
+                </div>
+            </div>
+            <div class="relative group">
+                <button class="hover:text-brand-wood transition">ÜRÜNLER <i class="fa-solid fa-chevron-down text-[8px]"></i></button>
+                <div class="absolute top-full left-0 mt-2 w-56 bg-black/90 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <a href="#cat-palet-detail" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">PALET ÇEŞİTLERİ</a>
+                    <a href="#cat-kasa-detail" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">KASA ÇEŞİTLERİ</a>
+                    <a href="#cat-kereste-detail" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">KERESTE VE LATA</a>
+                    <a href="#cat-kontrplak-detail" class="block px-4 py-3 text-gray-300 hover:text-brand-wood">KONTRPLAK ÜRÜNLERİ</a>
+                </div>
+            </div>
+            <a href="iletisim.html" class="hover:text-brand-wood">İLETİŞİM</a>
+        </div>
+        <button class="glass-panel border-0 bg-white/10 px-5 py-2 rounded-full text-xs hover:bg-white hover:text-brand-forest transition font-bold">TEKLİF AL</button>
+    </nav>
+
+    <!-- main-categories moved below (relocated after detail sections to support :target CSS) -->
+
+    <!-- DETAIL: PALET ÇEŞİTLERİ -->
+    <section id="cat-palet-detail" class="detail-section min-h-screen items-center justify-center px-6 py-24 bg-black/20">
+        <div class="max-w-7xl w-full">
+            <div class="mb-12 pt-8">
+                <button onclick="window.location.replace('urunler.html')" class="inline-flex items-center gap-2 text-brand-wood text-sm font-semibold hover:text-white transition-colors group cursor-pointer border-0 bg-transparent">
+                    <i class="fa-solid fa-arrow-left transform group-hover:-translate-x-1 transition-transform"></i>
+                    <span>Ürünlere Dön</span>
+                </button>
+            </div>
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-1 bg-brand-wood/20 border border-brand-wood/40 rounded-full text-brand-wood text-xs font-bold tracking-widest mb-4">ÜRÜN KATEGORİSİ</span>
+                <h2 class="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Palet Çeşitleri</h2>
+                <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Kontrplak Palet -->
+                <div id="product-pallet-ply" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-pallet-ply">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-ply', 'ply', 'open', this)"><i class="fa-solid fa-circle"></i> Altı Açık</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-ply', 'ply', 'closed', this)"><i class="fa-regular fa-circle"></i> Altı Kapalı</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-ply', 'ply', 'top_closed', this)"><i class="fa-regular fa-circle"></i> Üstü Kapalı</button>
+                        </div>
+                        <div class="type-badge">PLYWOOD</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Kontrplak Palet</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Kontrplak levhaların özenle seçilmiş takoz ve çıtalarla birleştirilmesiyle, kıymıksız ve pürüzsüz yüzeyli paletler üretilir. Yapıştırıcı ve tutkal seçiminde nem direnci ön plandadır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Hava kargo, elektronik eşya ihracatı ve hassas sanayi ürünlerinin sevkiyatında tercih edilir; hafifliği sayesinde navlun maliyetlerini düşürür.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>ISPM-15 muafiyeti sayesinde ısıl işlem gerektirmez; pürüzsüz yüzeyi ürünlerin zarar görmesini engeller.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Nem direnci yüksek tutkal ve kalite kontrol ile kıymıksız, pürüzsüz yüzey garantisi sunuyoruz.</p>
+                        </div>
+                    </div>
+                        <button onclick="console.log('Kontrplak palet button clicked'); toggleMeasurements('kontrplak-palet')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-ruler-combined"></i>
+                            <span>Boyutları görmek için tıklayınız</span>
+                        </button>
+                        <button class="w-full teklif-btn">TEKLİF AL</button>
+                    </div>
+
+                <!-- Ahşap Palet -->
+                <div id="product-pallet-std" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-pallet-std">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-std', 'std', 'open', this)"><i class="fa-solid fa-circle"></i> Altı Açık</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-std', 'std', 'closed', this)"><i class="fa-regular fa-circle"></i> Altı Kapalı</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updatePalletView('detail-pallet-std', 'std', 'top_closed', this)"><i class="fa-regular fa-circle"></i> Üstü Kapalı</button>
+                        </div>
+                        <div class="type-badge">AHŞAP</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Ahşap Palet</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Ebatlanmış çam, kavak veya kayın kerestelerin otomatik makinelerle veya elle çivilenmesiyle üretilir; gerektiğinde fırınlanır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Otomotiv, depo, market zincirleri ve genel endüstriyel taşıma işlemlerinde tercih edilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Yüksek taşıma kapasitesi, kolay onarım ve ikinci el değeri ile ekonomik çözümler sunar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Hassas çakım ve fırınlanmış malzeme kullanımıyla uzun ömür ve güvenilir performans sağlanır.</p>
+                        </div>
+                    </div>
+                    <button onclick="console.log('Ahşap palet button clicked'); toggleMeasurements('ahsap-palet')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ruler-combined"></i>
+                        <span>Boyutları görmek için tıklayınız</span>
+                    </button>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <!-- 2. El Palet -->
+                <div id="product-pallet-old" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-pallet-old">
+                        <div class="type-badge">2. EL</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">2. El Palet</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Kullanılmış paletler lisanslı tesislerimizde detaylı onarım ve dayanıklılık testlerinden geçirilir, değişen parçalar profesyonelce yenilenir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Yurtiçi sevkiyatlar, depolama ve ekonomik lojistik çözümleri için idealdir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Maliyeti düşürürken, sürdürülebilirlik ve geri dönüşüm avantajı sağlar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Her parça tek tek test edilir; güvenli ve neredeyse yeni performans garantisi verilir.</p>
+                        </div>
+                    </div>
+                    <button onclick="console.log('2. El palet button clicked'); toggleMeasurements('2el-palet')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ruler-combined"></i>
+                        <span>Boyutları görmek için tıklayınız</span>
+                    </button>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+            </div>
+            <!-- Measurements Section (appears on click) -->
+            <div id="measurements-section" class="hidden mt-16 transition-all duration-500">
+                    <div class="text-center mb-12 relative">
+                        <button onclick="toggleMeasurements(currentMeasurementType)" class="absolute right-0 top-0 text-white/50 hover:text-brand-wood transition text-2xl">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                        <h3 class="text-3xl md:text-4xl font-serif font-bold text-white mb-2" id="measurements-title">Standart/Seri Üretim Boyutlarımız</h3>
+                        <div class="w-16 h-1 bg-brand-wood mx-auto rounded-full"></div>
+                    </div>
+
+                    <div class="flex justify-center gap-3 mb-6">
+                        <button onclick="filterMeasurements('all')" class="filter-btn active" data-filter="all">Tümü</button>
+                        <button onclick="filterMeasurements('kapali')" class="filter-btn" data-filter="kapali">Altı Kapalı</button>
+                        <button onclick="filterMeasurements('acik')" class="filter-btn" data-filter="acik">Altı Açık</button>
+                        <button onclick="filterMeasurements('epal')" class="filter-btn" data-filter="epal">EPAL</button>
+                    </div>
+
+                    <div id="measurements-content" class="space-y-12">
+                        <!-- Content will be dynamically inserted here -->
+                    </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DETAIL: KASA ÇEŞİTLERİ -->
+    <section id="cat-kasa-detail" class="detail-section min-h-screen items-center justify-center px-6 py-24 bg-black/10">
+        <div class="max-w-7xl w-full">
+            <div class="mb-12 pt-8">
+                <a href="#" class="inline-flex items-center gap-2 text-brand-wood text-sm font-semibold hover:text-white transition-colors group cursor-pointer back-to-products">
+                    <i class="fa-solid fa-arrow-left transform group-hover:-translate-x-1 transition-transform"></i>
+                    <span>Ürünlere Dön</span>
+                </a>
+            </div>
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-1 bg-brand-wood/20 border border-brand-wood/40 rounded-full text-brand-wood text-xs font-bold tracking-widest mb-4">ÜRÜN KATEGORİSİ</span>
+                <h2 class="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Kasa Çeşitleri</h2>
+                <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div id="product-crate-wood" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-crate-wood">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-wood', 'std', 'closed', this)"><i class="fa-solid fa-circle"></i> Komple Kapalı</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-wood', 'std', 'cage', this)"><i class="fa-regular fa-circle"></i> Kargas</button>
+                        </div>
+                        <div class="type-badge">AHŞAP</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Ahşap Kasa</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Masif ahşap paneller ve iç takviye ızgaralarının birleşimiyle ağır yükler için özel olarak üretilir. İsteğe bağlı olarak desikant ve vakum folyo entegrasyonu uygulanır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Ağır sanayi makineleri, denizaşırı konteyner sevkiyatları ve hassas ekipman taşımalarında kullanılır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Dış darbeler ve neme karşı yüksek koruma; uzun mesafeli lojistik için güvenilir paketleme sağlar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>İsteğe göre güçlendirme seçenekleri ve özel köşe koruma ekipmanları sunuyoruz.</p>
+                        </div>
+                    </div>
+                        <button id="btn-ahsap-kasa" onclick="toggleMeasurementsKasa('ahsap-kasa')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-images"></i>
+                            <span>Örnek uygulamaları görmek için tıklayınız</span>
+                        </button>
+                        <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-crate-ply" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-crate-ply">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-ply', 'ply', 'closed', this)"><i class="fa-solid fa-circle"></i> Komple Kapalı</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-ply', 'ply', 'cage', this)"><i class="fa-regular fa-circle"></i> Kargas</button>
+                        </div>
+                        <div class="type-badge">KONTRPLAK</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Kontrplak Kasa</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Ahşap iskelet üzerine yüksek dayanımlı kontrplak levhaların kaplanmasıyla üretilir; hafif ama dayanıklı çözümler sunar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>İhracat, fuar taşımaları ve estetik sunum gerektiren ürünlerin naklinde kullanılır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>ISPM-15 muafiyeti, hafiflik ve estetik görünüm sağlar; markalama kolaylığı vardır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Hafiflik optimizasyonu ve müşteri taleplerine göre özelleştirme imkanı sunuyoruz.</p>
+                        </div>
+                    </div>
+                    <button id="btn-kontrplak-kasa" onclick="toggleMeasurementsKasa('kontrplak-kasa')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-images"></i>
+                        <span>Örnek uygulamaları görmek için tıklayınız</span>
+                    </button>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-crate-osb" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-crate-osb">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-osb', 'osb', 'closed', this)"><i class="fa-solid fa-circle"></i> Komple Kapalı</button>
+                        </div>
+                        <div class="type-badge">OSB</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">OSB Kasa</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Neme dayanıklı yönlendirilmiş yonga levhalardan (OSB) vidalama yöntemiyle üretilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Tek seferlik ihracatlar, yedek parça gönderimleri ve orta ağırlıktaki ürünler için uygundur.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Maliyet-etkin ve hafif çözüm; dayanıklılık gerektiren uygulamalarda tercih edilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>OSB-3 sınıfı malzeme seçimiyle ekstra neme direnç sağlanır.</p>
+                        </div>
+                    </div>
+                    <button id="btn-osb-kasa" onclick="toggleMeasurementsKasa('osb-kasa')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-images"></i>
+                        <span>Örnek uygulamaları görmek için tıklayınız</span>
+                    </button>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-crate-mix" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-crate-mix">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateCrateView('detail-crate-mix', 'mix', 'closed', this)"><i class="fa-solid fa-circle"></i> Komple Kapalı</button>
+                        </div>
+                        <div class="type-badge">KARIŞIM</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Ahşap & Kontrplak Kasa</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Sağlam ahşap iskelet ile kontrplak/panel yüzeylerin hibrit birleşimiyle üretilir; taşıyıcı güç ile pürüzsüz yüzey bir arada sunulur.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Mobilya, makine parçaları ve fuar ekipmanları için hem estetik hem dayanıklı çözümler sunar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Ahşabın taşıyıcı gücü ile kontrplak yüzeyin hafifliğini birleştirir; modüler tasarım imkanı verir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Özel köşe koruyucular ve isteğe bağlı iç takviye çözümleri ile ürününüzü en iyi şekilde koruruz.</p>
+                        </div>
+                    </div>
+                    <button id="btn-ahsap-kontrplak-kasa" onclick="toggleMeasurementsKasa('ahsap-kontrplak-kasa')" class="measurement-toggle-btn w-full text-brand-wood text-sm font-semibold py-3 mb-3 border border-brand-wood/30 rounded-lg hover:bg-brand-wood/10 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-images"></i>
+                        <span>Örnek uygulamaları görmek için tıklayınız</span>
+                    </button>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+            </div>
+        </div>
+        <!-- Measurements Section for Kasa (separate from Palet) -->
+        <div id="measurements-section-kasa" class="hidden mt-16 transition-all duration-500">
+            <div class="glass-panel rounded-2xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="measurements-title-kasa" class="text-2xl font-bold text-brand-wood">Kasa Boyutları</h3>
+                    <button onclick="document.getElementById('measurements-section-kasa').classList.add('hidden'); currentMeasurementTypeKasa = null;" class="text-white/60 hover:text-brand-wood transition">
+                        <i class="fa-solid fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="measurements-content-kasa" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Content populated by renderMeasurementsKasa() -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DETAIL: KERESTE & LATA -->
+    <section id="cat-kereste-detail" class="detail-section min-h-screen items-center justify-center px-6 py-24 bg-black/20">
+        <div class="max-w-7xl w-full">
+            <div class="mb-12 pt-8">
+                    <a href="#" class="inline-flex items-center gap-2 text-brand-wood text-sm font-semibold hover:text-white transition-colors group cursor-pointer back-to-products">
+                        <i class="fa-solid fa-arrow-left transform group-hover:-translate-x-1 transition-transform"></i>
+                        <span>Ürünlere Dön</span>
+                    </a>
+                </div>
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-1 bg-brand-wood/20 border border-brand-wood/40 rounded-full text-brand-wood text-xs font-bold tracking-widest mb-4">ÜRÜN KATEGORİSİ</span>
+                <h2 class="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Kereste ve Lata Ürünleri</h2>
+                <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div id="product-lumber-const" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-lumber-const">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateLumberView('detail-lumber-const', 'const', '5x10', this)"><i class="fa-solid fa-circle"></i> 5x10</button>
+                            <button class="variant-btn" onclick="event.stopPropagation(); event.preventDefault(); updateLumberView('detail-lumber-const', 'const', '10x10', this)"><i class="fa-regular fa-circle"></i> 10x10</button>
+                        </div>
+                        <div class="type-badge">İNŞAAT</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">İnşaat Kereste</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Tomrukların standart ölçülerde (5x10, 10x10 vb.) kesilmesiyle üretilir; dayanıklı ve ölçü hassasiyeti yüksek parçalar sunar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Beton kalıp ızgaraları, iskele platformları ve taşıyıcı konstrüksiyon işlerinde kullanılır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Kolay işlenebilir, güçlü ve tekrar kullanılabilir parçalar sağlar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Tam ölçü kesimi ve kaliteli tomruk seçimi ile dönme yapmayan ürünler sağlanır.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-lumber-joinery" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-lumber-joinery">
+                        <div class="variant-controls">
+                            <button class="variant-btn active" onclick="event.stopPropagation(); event.preventDefault(); updateLumberView('detail-lumber-joinery', 'joinery', 'silinmis', this)"><i class="fa-solid fa-circle"></i> Silinmiş</button>
+                        </div>
+                        <div class="type-badge">DOĞRAMALIK</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Doğramalık Kereste</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Fırınlanıp dört yüzeyi planyalanarak pürüzsüz hale getirilir; ideal nem dengesi sağlanır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Mobilya iskeleti, kapı-pencere ve dekoratif doğrama işler için uygundur.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Hazır yüzey, boyama ve montaj öncesi zımpara ihtiyacını azaltır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Bilgisayarlı fırın ve hassas planya ile kusursuz yüzey kalitesi sunulur.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-lata-wood" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-lata-wood">
+                        <div class="type-badge">AHŞAP</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Ahşap Lata</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>İnce şeritler halinde kesilmiş ve fırınlanmış keresteden üretilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Levha ve ahşap istiflerinde hava sirkülasyonu sağlamak ve ürünleri korumak için kullanılır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Ürünlerin birbirine yapışmasını önler, kuruma sürecini hızlandırır ve güvenli istif sağlar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Fırınlanmış malzeme ve kaliteli kesim ile leke ve küf riskini azaltır.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+
+                <div id="product-lata-ply" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-lata-ply">
+                        <div class="type-badge">KONTRPLAK</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Kontrplak Lata</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Kontrplak levhalardan istenen genişlikte şeritler halinde kesilerek üretilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Hassas ambalaj içi sabitleme, koli kenar koruması ve ürün ayırıcı olarak kullanılır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Masif ahşağa göre kıymık oluşturmaz, esnek ve kolay uygulanabilir.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Pürüzsüz yüzey ve hassas kesim ile hassas ürünlerin zarar görmesini engelleriz.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DETAIL: KONTRPLAK ÜRÜNLERİ -->
+    <section id="cat-kontrplak-detail" class="detail-section min-h-screen items-center justify-center px-6 py-24 bg-black/10">
+        <div class="max-w-7xl w-full">
+                <div class="mb-12 pt-8">
+                    <a href="#" class="inline-flex items-center gap-2 text-brand-wood text-sm font-semibold hover:text-white transition-colors group cursor-pointer back-to-products">
+                        <i class="fa-solid fa-arrow-left transform group-hover:-translate-x-1 transition-transform"></i>
+                        <span>Ürünlere Dön</span>
+                    </a>
+                </div>
+            <div class="text-center mb-16">
+                <span class="inline-block px-4 py-1 bg-brand-wood/20 border border-brand-wood/40 rounded-full text-brand-wood text-xs font-bold tracking-widest mb-4">ÜRÜN KATEGORİSİ</span>
+                <h2 class="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Kontrplak Ürünleri</h2>
+                <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div id="product-ply-cut" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-ply-cut">
+                        <div class="type-badge">EBATLAMA</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Ebatlanmış Kontrplak</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>Büyük plakaların hassas ebatlama makinelerinde kesilmesiyle elde edilir; kenar temizliği ve boyut hassasiyeti sağlanır.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Mobilya arkalıkları, çekmece tabanları ve endüstriyel parçalar için montaja hazır paneller.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>İşçilik ve fire tasarrufu; doğrudan montaja uygun parçalar sunar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Hassas kesim ve profesyonel finisaj ile endüstri standardı sonuçlar.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+                <div id="product-ply-sheet" class="glass-panel p-6 rounded-2xl">
+                    <div class="item-image-box h-64 mb-4" id="detail-ply-sheet">
+                        <div class="type-badge">TABAKA</div>
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-2">Tabaka Kontrplak</h4>
+                    <div class="mb-4 space-y-3 text-sm text-gray-300 leading-relaxed">
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Yapımı</h5>
+                            <p>İnce ağaç katmanlarının zıt yönlerde preslenmesiyle oluşturulan levhalardır; geniş yüzeylerde mukavemet sağlar.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Kullanım</h5>
+                            <p>Beton kalıpları, kaplama, zemin ve araç kasa uygulamaları için uygundur.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Avantaj</h5>
+                            <p>Geniş yüzey, yüksek dayanım ve suya karşı dayanıklı seçenekleri mevcuttur.</p>
+                        </div>
+                        <div>
+                            <h5 class="text-brand-wood font-bold text-xs uppercase tracking-wider mb-1">Orca Farkı</h5>
+                            <p>Farklı ağaç türlerinde zengin stok ve kalite kontrolü sunarız.</p>
+                        </div>
+                    </div>
+                    <button class="w-full teklif-btn">TEKLİF AL</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main 4 boxes section (landing) -->
+    <section id="main-categories" class="min-h-screen flex items-center justify-center px-6 py-24">
+        <div class="max-w-6xl w-full">
+            <div class="text-center mb-16">
+                <h1 class="text-5xl md:text-7xl font-serif font-bold text-white mb-4">Ahşap Ürün Çeşitlerimiz</h1>
+                <p class="text-gray-300 text-lg">Taşıma sektörünün temel ihtiyacı ahşap paletler için standart ya da özel ölçülerde üretim yapmaktayız.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Category 1: Palet Çeşitleri -->
+                <a href="#cat-palet-detail" class="group relative h-80 rounded-3xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-brand-wood/20">
+                    <img src="assets/palet-category.jpg" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-8">
+                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-layer-group text-white text-2xl"></i></div>
+                        <h3 class="text-3xl font-bold text-white mb-2">Palet Çeşitleri</h3>
+                        <p class="text-gray-300 text-sm">Kontrplak, Ahşap ve 2. El Palet</p>
+                    </div>
+                </a>
+
+                <!-- Category 2: Kasa Çeşitleri -->
+                <a href="#cat-kasa-detail" class="group relative h-80 rounded-3xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-brand-wood/20">
+                    <img src="assets/kasa-category.jpg" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1595246140625-573b715d11fc?w=800'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-8">
+                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-box text-white text-2xl"></i></div>
+                        <h3 class="text-3xl font-bold text-white mb-2">Kasa Çeşitleri</h3>
+                        <p class="text-gray-300 text-sm">Ahşap, Kontrplak, OSB Kasalar</p>
+                    </div>
+                </a>
+
+                <!-- Category 3: Kereste ve Lata Ürünleri -->
+                <a href="#cat-kereste-detail" class="group relative h-80 rounded-3xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-brand-wood/20">
+                    <img src="assets/kereste-category.jpg" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=800'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-8">
+                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-tree text-white text-2xl"></i></div>
+                        <h3 class="text-3xl font-bold text-white mb-2">Kereste ve Lata Ürünleri</h3>
+                        <p class="text-gray-300 text-sm">İnşaat Kerestesi, Lata ve Çıtalar</p>
+                    </div>
+                </a>
+
+                <!-- Category 4: Kontrplak Ürünleri -->
+                <a href="#cat-kontrplak-detail" class="group relative h-80 rounded-3xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-brand-wood/20">
+                    <img src="assets/kontrplak-category.jpg" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-8">
+                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-table-cells-large text-white text-2xl"></i></div>
+                        <h3 class="text-3xl font-bold text-white mb-2">Kontrplak Ürünleri</h3>
+                        <p class="text-gray-300 text-sm">Ebatlanmış ve Tabaka Kontrplak</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative bg-black/95 border-t border-brand-wood/20 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                
+                <!-- Column 1: Company Info with Large Logo -->
+                <div class="md:col-span-1 flex flex-col items-start">
+                    <img src="assets/logo.png" alt="Orca Logo" class="h-32 w-auto mb-6">
+                    <h3 class="text-white font-bold text-lg mb-4">Orca Orman Ürünleri</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Ahşap Ambalaj Mobilya Dekorasyon İnş. Taah. San. Ve Tic. Ltd. Şti.
+                    </p>
+                </div>
+
+                <!-- Column 2: Products -->
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Ürünlerimiz</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="urunler.html#palet" class="text-gray-400 hover:text-brand-wood transition text-sm">
+                                <i class="fa-solid fa-chevron-right text-xs mr-2"></i>Paletler
+                            </a>
+                        </li>
+                        <li>
+                            <a href="urunler.html#kasa" class="text-gray-400 hover:text-brand-wood transition text-sm">
+                                <i class="fa-solid fa-chevron-right text-xs mr-2"></i>Kasalar
+                            </a>
+                        </li>
+                        <li>
+                            <a href="urunler.html#kontrplak" class="text-gray-400 hover:text-brand-wood transition text-sm">
+                                <i class="fa-solid fa-chevron-right text-xs mr-2"></i>Kontrplak
+                            </a>
+                        </li>
+                        <li>
+                            <a href="urunler.html#kereste" class="text-gray-400 hover:text-brand-wood transition text-sm">
+                                <i class="fa-solid fa-chevron-right text-xs mr-2"></i>Kereste
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Çalı Fabrika -->
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Çalı Fabrika</h3>
+                    <div class="space-y-3">
+                        <a href="https://maps.google.com/?q=Çalı+Mahallesi+Dönüş+Cadde+No:13+Çalı/Nilüfer/BURSA" target="_blank" class="flex items-start gap-3 text-gray-400 hover:text-brand-wood transition text-sm group">
+                            <i class="fa-solid fa-location-dot text-brand-wood mt-1"></i>
+                            <span>Çalı Mahallesi Dönüş cadde No:13 Çalı/Nilüfer/BURSA</span>
+                        </a>
+                        <a href="mailto:orcaahsap@orcaahsap.com" class="flex items-center gap-3 text-gray-400 hover:text-brand-wood transition text-sm">
+                            <i class="fa-solid fa-envelope text-brand-wood"></i>
+                            <span>orcaahsap@orcaahsap.com</span>
+                        </a>
+                        <a href="tel:02244822892" class="flex items-center gap-3 text-gray-400 hover:text-brand-wood transition text-sm">
+                            <i class="fa-solid fa-phone text-brand-wood"></i>
+                            <span>0 224 482 2892</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Column 4: Kocaeli Şube -->
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Kocaeli Şube</h3>
+                    <div class="space-y-3">
+                        <a href="https://maps.google.com/?q=Kirazpınar+Mahallesi+2775+Sokak+No:1+Gebze/Kocaeli" target="_blank" class="flex items-start gap-3 text-gray-400 hover:text-brand-wood transition text-sm group">
+                            <i class="fa-solid fa-location-dot text-brand-wood mt-1"></i>
+                            <span>Kirazpınar Mahallesi, 2775 Sokak No: 1, Gebze/Kocaeli</span>
+                        </a>
+                        <a href="mailto:orcaahsap@orcaahsap.com" class="flex items-center gap-3 text-gray-400 hover:text-brand-wood transition text-sm">
+                            <i class="fa-solid fa-envelope text-brand-wood"></i>
+                            <span>orcaahsap@orcaahsap.com</span>
+                        </a>
+                        <a href="tel:05336605802" class="flex items-center gap-3 text-gray-400 hover:text-brand-wood transition text-sm">
+                            <i class="fa-solid fa-phone text-brand-wood"></i>
+                            <span>0 533 660 5802</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-white/10 pt-8 text-center">
+                <p class="text-gray-500 text-sm">
+                    © 2025 ORCA ORMAN ÜRÜNLERİ | BURSA & GEBZE
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Copy 3D viewer JS and initialization (trimmed to necessary parts) -->
+    <script>
+        // setupScene (copied from index.html)
+        function setupScene(container) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(0, 8, 16); camera.lookAt(0,0,0);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.domElement.className = 'thumb-canvas';
+            container.appendChild(renderer.domElement);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffeebb, 1.5); dirLight.position.set(5, 10, 7); scene.add(dirLight);
+            const fillLight = new THREE.DirectionalLight(0xaaddff, 0.3); fillLight.position.set(-5, 2, -5); scene.add(fillLight);
+            const group = new THREE.Group(); scene.add(group);
+            let isHovering = false, mouseX = 0, mouseY = 0;
+            container.addEventListener('mouseenter', () => isHovering = true);
+            container.addEventListener('mouseleave', () => isHovering = false);
+            container.addEventListener('mousemove', (e) => { if(!isHovering) return; const r = container.getBoundingClientRect(); mouseX = ((e.clientX - r.left) / r.width) * 2 - 1; mouseY = -((e.clientY - r.top) / r.height) * 2 + 1; });
+            const animate = () => { requestAnimationFrame(animate); if (isHovering) { group.rotation.y += (mouseX*Math.PI - group.rotation.y)*0.1; group.rotation.x += (-mouseY*Math.PI*0.5 - group.rotation.x)*0.1; } else { group.rotation.y += 0.005; group.rotation.x = Math.sin(Date.now()*0.001)*0.1; } renderer.render(scene, camera); };
+            animate();
+            return { scene, group, renderer, camera };
+        }
+
+        // PalletViewer, CrateViewer, LumberViewer, LataViewer, SheetViewer (copied)
+        const PalletViewer = (function() {
+            const viewers = {};
+            function init(id, type, variant='open') { const c = document.getElementById(id); if(!c) return; const { group } = setupScene(c); const mat = { ply: new THREE.MeshStandardMaterial({color: 0xE6D2B5, roughness: 0.9}), std: new THREE.MeshStandardMaterial({color: 0xD4A373, roughness: 0.9}), old: new THREE.MeshStandardMaterial({color: 0x8F8F8F, roughness: 1.0}) }; const state = { group, mat, type, variant }; build(state); viewers[id] = state; }
+            function updateView(id, type, variant) { const s = viewers[id]; if(!s) return; s.variant = variant; build(s); }
+            function build(s) {
+                const { group, mat, variant, type } = s;
+                while(group.children.length) group.remove(group.children[0]);
+                const m = mat[type] || mat.std;
+                const add = (geo, x, y, z) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(x,y,z); group.add(mesh); };
+                const isSolid = (variant === 'top_closed'), isPerimeter = (variant === 'closed');
+                if(isSolid) add(new THREE.BoxGeometry(10, 0.1, 12), 0, 0.65, 0); else [-4.5, -3, -1.5, 0, 1.5, 3, 4.5].forEach(x => add(new THREE.BoxGeometry(1.2, 0.15, 12), x, 0.65, 0));
+                [-5.4, 0, 5.4].forEach(z => add(new THREE.BoxGeometry(10, 0.15, 1.2), 0, 0.5, z));
+                [-4.4, 0, 4.4].forEach(x => [-5.4, 0, 5.4].forEach(z => add(new THREE.BoxGeometry(1.2, 0.8, 1.2), x, 0, z)));
+                const board = new THREE.BoxGeometry(1.2, 0.15, 12), cross = new THREE.BoxGeometry(10, 0.15, 1.2);
+                if(isPerimeter) { add(board, -4.4, -0.5, 0); add(board, 4.4, -0.5, 0); add(cross, 0, -0.5, -5.4); add(cross, 0, -0.5, 0); add(cross, 0, -0.5, 5.4); } else { add(board, -4.4, -0.5, 0); add(board, 0, -0.5, 0); add(board, 4.4, -0.5, 0); }
+            }
+            return { init, updateView };
+        })();
+
+        const CrateViewer = (function() {
+            const viewers = {};
+            function init(id, type, variant='closed') { const c = document.getElementById(id); if(!c) return; const { group, camera } = setupScene(c); camera.position.set(0, 10, 35); camera.lookAt(0, 2, 0); const mat = { ply: new THREE.MeshStandardMaterial({color: 0xE6D2B5, roughness: 0.9}), std: new THREE.MeshStandardMaterial({color: 0xD4A373, roughness: 0.9}), osb: new THREE.MeshStandardMaterial({color: 0xC19A6B, roughness: 1.0}) }; const state = { group, mat, type, variant }; build(state); viewers[id] = state; }
+            function updateView(id, type, variant) { const s = viewers[id]; if(!s) return; s.variant = variant; build(s); }
+            function build(s) {
+                const { group, mat, variant, type } = s;
+                while(group.children.length) group.remove(group.children[0]);
+                const woodM = new THREE.MeshStandardMaterial({color: 0xD4A373, roughness: 0.9}), plyM = new THREE.MeshStandardMaterial({color: 0xE6D2B5, roughness: 0.9});
+                const mainM = mat[type] || mat.std, frameM = (type === 'mix') ? woodM : mainM, panelM = (type === 'mix') ? plyM : mainM;
+                const add = (geo, x, y, z, m=frameM) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(x,y,z); group.add(mesh); };
+                const W=10, L=12, H=8;
+                add(new THREE.BoxGeometry(W, 0.5, L), 0, 0.25, 0); [-4, 0, 4].forEach(x => add(new THREE.BoxGeometry(1, 0.5, L), x, -0.25, 0));
+                if(variant === 'closed') {
+                    add(new THREE.BoxGeometry(W, H, 0.2), 0, H/2+0.5, -L/2+0.1, panelM); add(new THREE.BoxGeometry(W, H, 0.2), 0, H/2+0.5, L/2-0.1, panelM);
+                    add(new THREE.BoxGeometry(0.2, H, L-0.4), -W/2+0.1, H/2+0.5, 0, panelM); add(new THREE.BoxGeometry(0.2, H, L-0.4), W/2-0.1, H/2+0.5, 0, panelM);
+                    if(type === 'mix' || type === 'std') { const post = new THREE.BoxGeometry(0.5, H, 0.5); add(post, -W/2+0.25, H/2+0.5, -L/2+0.25, frameM); add(post, W/2-0.25, H/2+0.5, -L/2+0.25, frameM); add(post, -W/2+0.25, H/2+0.5, L/2-0.25, frameM); add(post, W/2-0.25, H/2+0.5, L/2-0.25, frameM); }
+                } else {
+                    [2, 5, 8].forEach(y => { add(new THREE.BoxGeometry(0.2, 1, L), -W/2, y, 0, frameM); add(new THREE.BoxGeometry(0.2, 1, L), W/2, y, 0, frameM); add(new THREE.BoxGeometry(W, 1, 0.2), 0, y, -L/2, frameM); add(new THREE.BoxGeometry(W, 1, 0.2), 0, y, L/2, frameM); });
+                    const post = new THREE.BoxGeometry(0.5, H, 0.5); add(post, -W/2+0.25, H/2+0.5, -L/2+0.25, frameM); add(post, W/2-0.25, H/2+0.5, -L/2+0.25, frameM); add(post, -W/2+0.25, H/2+0.5, L/2-0.25, frameM); add(post, W/2-0.25, H/2+0.5, L/2-0.25, frameM);
+                }
+            }
+            return { init, updateView };
+        })();
+
+        const LumberViewer = (function() {
+            function init(id, type, variant) { const c = document.getElementById(id); if(!c) return; const { group } = setupScene(c); const mat = { const: new THREE.MeshStandardMaterial({color: 0xC19A6B, roughness: 1.0}), join: new THREE.MeshStandardMaterial({color: 0xE8C39E, roughness: 0.6}) }; const build = (t, v) => { while(group.children.length) group.remove(group.children[0]); const m = (t==='const') ? mat.const : mat.join; const add = (geo, x, y, z) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(x,y,z); group.add(mesh); }; if(t==='const') { if(v==='5x10') for(let i=0;i<3;i++) for(let j=0;j<4;j++) add(new THREE.BoxGeometry(2,1,12), (i-1)*2.2, (j*1.1)-2, 0); else for(let i=0;i<2;i++) for(let j=0;j<2;j++) add(new THREE.BoxGeometry(2,2,12), (i-0.5)*2.2, (j*2.2)-2, 0); } else for(let i=0;i<4;i++) add(new THREE.BoxGeometry(8, 0.5, 12), 0, (i*0.6)-1, 0); }; c.updateLumber = (v) => build(type, v); build(type, variant); } return { init };
+        })();
+
+        const LataViewer = (function() {
+            function init(id, type) { const c = document.getElementById(id); if(!c) return; const { group } = setupScene(c); const mat = (type==='ply') ? new THREE.MeshStandardMaterial({color: 0xE6D2B5}) : new THREE.MeshStandardMaterial({color: 0xD4A373}); for(let i=0; i<4; i++) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 12), mat); mesh.position.set((i-1.5)*1.5, (Math.random()-0.5)*2, 0); mesh.rotation.z = Math.random() * 0.5; group.add(mesh); } } return { init };
+        })();
+
+        const SheetViewer = (function() {
+            function init(id, type) { const c = document.getElementById(id); if(!c) return; const { group } = setupScene(c); const mat = new THREE.MeshStandardMaterial({color: 0xE6D2B5, roughness: 0.9}); if(type==='cut') { for(let i=0; i<3; i++) for(let j=0; j<2; j++) { const m = new THREE.Mesh(new THREE.BoxGeometry(3,0.1,4), mat); m.position.set((i-1)*3.5, j*0.2, 0); group.add(m); } } else { const m = new THREE.Mesh(new THREE.BoxGeometry(8,0.1,10), mat); m.rotation.x = Math.PI/4; group.add(m); } } return { init };
+        })();
+
+        // Product descriptions (small subset used by detail page)
+        const productDescriptions = {
+            'ply': { 'open': 'Kontrplak palet: hafif, ihracatta avantajlı.', 'closed': 'Kontrplak palet - alt kapalı.' },
+            'std': { 'open': 'Ahşap palet: ağır yükler için dayanıklı.', 'closed': 'Ahşap palet - alt kapalı.' },
+            'osb': { 'closed': 'OSB kasa açıklama.' },
+            'mix': { 'closed': 'Karma kasa açıklama.' },
+            'const': { '5x10': 'İnşaatlık kereste 5x10.', '10x10': 'İnşaatlık kereste 10x10.' },
+            'joinery': { 'silinmis': 'Doğramalık kereste açıklama.' }
+        };
+
+        function updateProductDescription(btn, type, variant) {
+            if (!btn) return; const item = btn.closest('.glass-panel'); if (!item) return; const descEl = item.querySelector('p'); if(!descEl) return;
+            let desc = '';
+            if (productDescriptions[type] && productDescriptions[type][variant]) desc = productDescriptions[type][variant];
+            descEl.innerHTML = desc || descEl.innerHTML;
+        }
+
+        function updatePalletView(id, t, v, btn) { PalletViewer.updateView(id, t, v); updateProductDescription(btn, t, v); updateUI(btn); }
+        function updateCrateView(id, t, v, btn) { CrateViewer.updateView(id, t, v); updateProductDescription(btn, t, v); updateUI(btn); }
+        function updateLumberView(id, t, v, btn) { const el = document.getElementById(id); if(el && el.updateLumber) el.updateLumber(v); updateProductDescription(btn, t, v); updateUI(btn); }
+        function updateUI(btn) { 
+            if(!btn) return;
+            const parent = btn.parentElement;
+            if(!parent) return;
+
+            // Remove active class from all buttons in this container
+            parent.querySelectorAll('.variant-btn').forEach(b => {
+                b.classList.remove('active');
+                const icon = b.querySelector('i');
+                if(icon) icon.className = 'fa-regular fa-circle';
+            });
+
+            // Add active class to clicked button
+            btn.classList.add('active');
+            const icon = btn.querySelector('i');
+            if(icon) icon.className = 'fa-solid fa-circle';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // remove loader if present
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 600);
+            }
+
+            // Initialize viewers based on URL hash (product anchor or category)
+            function initViewersForSection(sid) {
+                if (!sid) return;
+                if (sid === 'cat-palet-detail' && typeof PalletViewer !== 'undefined') {
+                    PalletViewer.init('detail-pallet-ply', 'ply', 'open');
+                    PalletViewer.init('detail-pallet-std', 'std', 'open');
+                    PalletViewer.init('detail-pallet-old', 'old', 'open');
+                } else if (sid === 'cat-kasa-detail' && typeof CrateViewer !== 'undefined') {
+                    CrateViewer.init('detail-crate-wood', 'std', 'closed');
+                    CrateViewer.init('detail-crate-ply', 'ply', 'closed');
+                    CrateViewer.init('detail-crate-osb', 'osb', 'closed');
+                    CrateViewer.init('detail-crate-mix', 'mix', 'closed');
+                } else if (sid === 'cat-kereste-detail') {
+                    if (typeof LumberViewer !== 'undefined') {
+                        LumberViewer.init('detail-lumber-const', 'const', '5x10');
+                        LumberViewer.init('detail-lumber-joinery', 'joinery', 'silinmis');
+                    }
+                    if (typeof LataViewer !== 'undefined') {
+                        LataViewer.init('detail-lata-wood', 'std');
+                        LataViewer.init('detail-lata-ply', 'ply');
+                    }
+                } else if (sid === 'cat-kontrplak-detail' && typeof SheetViewer !== 'undefined') {
+                    SheetViewer.init('detail-ply-cut', 'cut');
+                    SheetViewer.init('detail-ply-sheet', 'sheet');
+                }
+            }
+
+            function applyHash() {
+                const hash = window.location.hash || '';
+                const main = document.getElementById('main-categories');
+                document.querySelectorAll('.detail-section').forEach(s => s.style.display = 'none');
+                if (!hash) { if (main) main.style.display = 'flex'; return; }
+                if (hash.startsWith('#product-')) {
+                    const productEl = document.querySelector(hash);
+                    if (productEl) {
+                        if (main) main.style.display = 'none';
+                        const section = productEl.closest('.detail-section');
+                        if (section) { section.style.display = 'flex'; initViewersForSection(section.id); }
+                    }
+                    return;
+                }
+                const section = document.querySelector(hash);
+                if (section && section.classList.contains('detail-section')) { if (main) main.style.display = 'none'; section.style.display = 'flex'; initViewersForSection(section.id); return; }
+                if (main) main.style.display = 'flex';
+            }
+
+            applyHash();
+            window.addEventListener('hashchange', applyHash);
+        });
+
+    </script>
+
+    <script>
+    // Helper to return to products grid without navigating away
+    function goToProductsHome() {
+        try {
+            // remove any hash from URL without reloading
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', '/urunler.html');
+            } else {
+                window.location.hash = '';
+            }
+            // show main categories and hide detail sections
+            const main = document.getElementById('main-categories');
+            document.querySelectorAll('.detail-section').forEach(s => s.style.display = 'none');
+            if (main) {
+                main.style.display = 'flex';
+                main.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (err) {
+            // fallback to safe navigation
+            window.location.href = '/urunler.html';
+        }
+    }
+    </script>
+
+    <!-- Floating planks background script -->
+    <script>
+    // Measurements data structure
+    const measurementsData = {
+        'kontrplak-palet': {
+            title: 'Kontrplak Palet - Standart/Seri Üretim Boyutlarımız',
+            categories: [
+                {
+                    name: 'Altı Kapalı Palet',
+                    sizes: [
+                        { dimension: '98 × 114 cm', capacity: '500 kg', image: 'assets/kontrafoto/98_114_second.png' },
+                        { dimension: '80 × 120 cm', capacity: '500 kg', image: 'assets/kontrafoto/80_120_second.png' },
+                        { dimension: '132 × 114 cm', capacity: '500 kg', image: 'assets/kontrafoto/132_114_second.png' },
+                        { dimension: '146 × 114 cm', capacity: '500 kg', image: 'assets/kontrafoto/146_112_second.png' },
+                        { dimension: '170 × 114 cm', capacity: '500 kg', image: 'assets/kontrafoto/170_114_second.png' },
+                        { dimension: '198 × 114 cm', capacity: '500 kg', image: 'assets/kontrafoto/198_114_second.png' }
+                    ]
+                },
+                {
+                    name: 'Altı Açık Palet',
+                    sizes: [
+                        { dimension: '80 × 120 cm', capacity: '300–400 kg', image: 'assets/kontrafoto/80_120_main.png' }
+                    ]
+                }
+            ]
+        },
+        'ahsap-palet': {
+            title: 'Ahşap Palet - Standart/Seri Üretim Boyutlarımız',
+            categories: [
+                {
+                    name: 'Altı Kapalı Paletler',
+                    sizes: [
+                        { dimension: '98 × 114 cm', type: 'Kit Model Paleti', capacity: '1000–1500 kg', image: null },
+                        { dimension: '98 × 114 cm', type: 'Altı Kapalı', capacity: '500 kg', image: 'assets/ahsapfoto/98_114_kapali_main.png' },
+                        { dimension: '80 × 120 cm', type: 'Altı Kapalı', capacity: '500–600 kg', image: null },
+                        { dimension: '100 × 120 cm', type: 'Altı Kapalı', capacity: '500–600 kg', image: 'assets/ahsapfoto/100_120_kapali_main.png' },
+                        { dimension: '101 × 121 cm', type: 'Altı Kapalı', capacity: '500–600 kg', image: 'assets/ahsapfoto/101_121_kapali_main.png' },
+                        { dimension: '102 × 122 cm', type: 'Altı Kapalı', capacity: '700–800 kg', image: 'assets/ahsapfoto/102_122_kapali_main.png' },
+                        { dimension: '132 × 114 cm', type: 'Altı Kapalı', capacity: '500 kg', image: 'assets/ahsapfoto/132_114_kapali_main.png' },
+                        { dimension: '146 × 114 cm', type: 'Altı Kapalı', capacity: '500 kg', image: 'assets/ahsapfoto/146_114_kapali_main.png' },
+                        { dimension: '170 × 114 cm', type: 'Altı Kapalı', capacity: '500 kg', image: 'assets/ahsapfoto/170_114_kapali_main.png' },
+                        { dimension: '198 × 114 cm', type: 'Altı Kapalı', capacity: '500 kg', image: 'assets/ahsapfoto/198_114_kapali_main.png' }
+                    ]
+                },
+                {
+                    name: 'Altı Açık Paletler',
+                    sizes: [
+                        { dimension: '80 × 120 cm', type: 'Altı Açık Palet (Hafif)', capacity: '300–400 kg', image: 'assets/ahsapfoto/80_120_acik_main.png' },
+                        { dimension: '80 × 120 cm', type: 'Altı Açık Palet (Ağır)', capacity: '500–600 kg', image: 'assets/ahsapfoto/80_120_acik_500_main.png' },
+                        { dimension: '100 × 120 cm', type: 'Altı Açık Palet (Hafif)', capacity: '300–400 kg', image: null },
+                        { dimension: '100 × 120 cm', type: 'Altı Açık Palet (Ağır)', capacity: '500–600 kg', image: null }
+                    ]
+                },
+                {
+                    name: 'EPAL Standart',
+                    sizes: [
+                        { dimension: '80 × 120 cm', type: 'EPAL Sertifikalı', capacity: '1500 kg', image: null }
+                    ]
+                }
+            ]
+        },
+        '2el-palet': {
+            title: '2. El Palet - Mevcut Boyutlar',
+            categories: [
+                {
+                    name: 'Standart Boyutlar',
+                    sizes: [
+                        { dimension: '80 × 120 cm', type: 'Ahşap Standart', image: null },
+                        { dimension: '100 × 120 cm', type: 'Ahşap Standart', image: null }
+                    ]
+                }
+            ]
+        },
+        'ahsap-kasa': {
+            title: 'Ahşap Kasa (Kargas) - Örnek Uygulamalar',
+            note: 'Müşteri ihtiyaçlarına göre özel ölçülerde üretim yapılmaktadır. Gösterilen ölçüler örnek teşkil etmektedir.',
+            categories: [
+                {
+                    name: 'Kargas Model Ahşap Kasa',
+                    sizes: [
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Örnek: 103 × 128 × 136 cm',
+                            images: [
+                                'assets/kasafoto/103_128_136.png',
+                                'assets/kasafoto/IMG_2455.png'
+                            ],
+                            isCustom: true
+                        }
+                    ]
+                }
+            ]
+        },
+        'ahsap-kontrplak-kasa': {
+            title: 'Ahşap & Kontrplak Kasa - Örnek Uygulamalar',
+            note: 'Müşteri ihtiyaçlarına göre özel ölçülerde üretim yapılmaktadır. Gösterilen ölçüler örnek teşkil etmektedir.',
+            categories: [
+                {
+                    name: 'Hibrit Kasa (Ahşap + Kontrplak)',
+                    sizes: [
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Örnek: 80 × 120 × 65 cm',
+                            images: [
+                                'assets/kasafoto/80_120_65.png',
+                                'assets/kasafoto/IMG_2450.png',
+                                'assets/kasafoto/IMG_2451.png'
+                            ],
+                            isCustom: true
+                        }
+                    ]
+                }
+            ]
+        },
+        'kontrplak-kasa': {
+            title: 'Kontrplak Kasa - Örnek Uygulamalar',
+            note: 'Müşteri ihtiyaçlarına göre özel ölçülerde üretim yapılmaktadır.',
+            categories: [
+                {
+                    name: 'Kontrplak Kasa Örnekleri',
+                    sizes: [
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Talebe Göre Üretim',
+                            image: null,
+                            isCustom: true
+                        },
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Talebe Göre Üretim',
+                            image: null,
+                            isCustom: true
+                        }
+                    ]
+                }
+            ]
+        },
+        'osb-kasa': {
+            title: 'OSB Kasa - Örnek Uygulamalar',
+            note: 'Müşteri ihtiyaçlarına göre özel ölçülerde üretim yapılmaktadır.',
+            categories: [
+                {
+                    name: 'OSB Kasa Örnekleri',
+                    sizes: [
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Talebe Göre Üretim',
+                            image: null,
+                            isCustom: true
+                        },
+                        { 
+                            dimension: 'Özel Ölçü', 
+                            type: 'Talebe Göre Üretim',
+                            image: null,
+                            isCustom: true
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+
+    // Track current visible measurement type and filter
+    let currentMeasurementType = null;
+    let currentFilter = 'all';
+    
+    // Track current visible measurement type for Kasa
+    let currentMeasurementTypeKasa = null;
+
+    function filterMeasurements(filter) {
+        currentFilter = filter || 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === currentFilter));
+        if (currentMeasurementType) renderMeasurements(currentMeasurementType);
+    }
+
+    function renderMeasurements(productType) {
+        const section = document.getElementById('measurements-section');
+        const content = document.getElementById('measurements-content');
+        const title = document.getElementById('measurements-title');
+        const filterContainer = document.querySelector('.flex.justify-center.gap-3.mb-6');
+        
+        const data = measurementsData[productType];
+        if (!data) { 
+            section.classList.add('hidden'); 
+            return; 
+        }
+        
+        title.textContent = data.title;
+        
+        // Add note if exists
+        const existingNote = title.nextElementSibling;
+        if (existingNote && existingNote.classList.contains('text-gray-400')) {
+            existingNote.remove();
+        }
+        if (data.note) {
+            const noteEl = document.createElement('p');
+            noteEl.className = 'text-center text-gray-400 text-sm italic mt-2';
+            noteEl.textContent = data.note;
+            title.after(noteEl);
+        }
+
+        // Show/hide filter buttons (only for palet types)
+        const isPaletType = productType.includes('palet');
+        if (filterContainer) {
+            filterContainer.style.display = isPaletType ? 'flex' : 'none';
+        }
+
+        let html = '';
+        data.categories.forEach(category => {
+            // Filter sizes if applicable
+            const filtered = isPaletType ? category.sizes.filter(size => {
+                if (currentFilter === 'all') return true;
+                const t = (size.type || '').toLowerCase();
+                const cat = (category.name || '').toLowerCase();
+                if (currentFilter === 'kapali') return t.includes('kapalı') || cat.includes('kapalı');
+                if (currentFilter === 'acik') return t.includes('açık') || cat.includes('açık');
+                if (currentFilter === 'epal') return t.includes('epal') || cat.includes('epal');
+                return true;
+            }) : category.sizes;
+
+            if (!filtered.length) return;
+            
+            html += `
+                <div class="mb-8">
+                    <h4 class="text-xl md:text-2xl font-bold text-brand-wood mb-6 text-center">${category.name}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${filtered[0]?.isCustom ? '2xl:grid-cols-2' : '2xl:grid-cols-5'} gap-6">
+            `;
+
+            filtered.forEach(size => {
+                // Custom size badge
+                const customBadge = size.isCustom ? `
+                    <div class="inline-block px-3 py-1 bg-brand-wood/20 border border-brand-wood/40 rounded text-brand-wood text-sm font-bold mb-3">ÖZEL ÖLÇÜ</div>
+                ` : '';
+                
+                // Handle multiple images or single image
+                let imageHtml = '';
+                if (size.images && size.images.length > 0) {
+                    // Multiple images - create grid
+                    imageHtml = `
+                        <div class="measurement-images-grid mb-3">
+                            ${size.images.map(img => `
+                                <div class="measurement-image-container">
+                                    <img src="${img}" alt="${size.dimension}" class="measurement-image cursor-pointer" onclick="event.stopPropagation(); openImageModal('${img}', '${size.dimension}')" onerror="this.parentElement.innerHTML='<div class=\'measurement-image-placeholder\'><div><i class=\'fa-solid fa-image text-3xl mb-2 block opacity-30\'></i><div class=\'text-xs opacity-50\'>Görsel Yüklenemedi</div></div></div>'">
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (size.image) {
+                    // Single image
+                    imageHtml = `
+                        <div class="measurement-image-container mb-3">
+                            <img src="${size.image}" alt="${size.dimension}" class="measurement-image cursor-pointer" onclick="event.stopPropagation(); openImageModal('${size.image}', '${size.dimension}')" onerror="this.parentElement.innerHTML='<div class=\'measurement-image-placeholder\'><div><i class=\'fa-solid fa-image text-3xl mb-2 block opacity-30\'></i><div class=\'text-xs opacity-50\'>Görsel Yüklenemedi</div></div></div>'">
+                        </div>
+                    `;
+                } else {
+                    // No image
+                    imageHtml = `
+                        <div class="measurement-image-container mb-3">
+                            <div class='measurement-image-placeholder'><div><i class='fa-solid fa-camera text-3xl mb-2 block opacity-30'></i><div class='text-xs opacity-50'>Görsel Bekleniyor</div></div></div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="measurement-card ${size.isCustom ? 'custom-size-card' : ''}">
+                        ${customBadge}
+                        ${imageHtml}
+                        <div class="text-center px-3 pb-4">
+                            <div class="text-brand-wood font-bold text-lg mb-1">${size.dimension}</div>
+                            ${size.type ? `<div class="text-gray-400 text-xs mb-1">${size.type}</div>` : ''}
+                            ${size.capacity ? `<div class="text-white text-sm font-semibold flex items-center justify-center gap-1"><i class="fa-solid fa-weight-hanging text-brand-wood text-xs"></i> ${size.capacity}</div>` : ''}
+                            ${size.isCustom ? `
+                                <div class="text-white/70 text-sm mt-3">İhtiyacınıza özel üretim</div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        if (!html) html = `Bu filtreye uyan boyut bulunamadı.`;
+        content.innerHTML = html;
+        section.classList.remove('hidden');
+        setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+
+    // Lightbox modal for zooming images
+    function openImageModal(imageSrc, title) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4';
+        modal.onclick = () => modal.remove();
+        modal.innerHTML = `
+            <div class="max-w-4xl w-full">
+                <div class="text-right mb-4">
+                    <button class="text-white text-3xl hover:text-brand-wood transition">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <img src="${imageSrc}" alt="${title}" class="w-full h-auto rounded-lg">
+                <div class="text-center mt-4 text-white text-xl font-bold">${title}</div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Toggle measurements function (uses renderer)
+    function toggleMeasurements(productType) {
+        const section = document.getElementById('measurements-section');
+        if (!section) {
+            console.error('measurements-section not found');
+            return;
+        }
+
+        if (currentMeasurementType === productType && !section.classList.contains('hidden')) {
+            section.classList.add('hidden');
+            currentMeasurementType = null;
+            return;
+        }
+        currentMeasurementType = productType;
+        // Reset filter to all when switching product types
+        currentFilter = 'all';
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+        renderMeasurements(productType);
+    }
+
+    // ==============================================
+    // KASA MEASUREMENTS FUNCTIONS (Copy of Palet structure)
+    // ==============================================
+
+    // Toggle measurements function for Kasa
+    function toggleMeasurementsKasa(productType) {
+        const section = document.getElementById('measurements-section-kasa');
+        if (!section) {
+            console.error('measurements-section-kasa not found');
+            return;
+        }
+        
+        if (currentMeasurementTypeKasa === productType && !section.classList.contains('hidden')) {
+            section.classList.add('hidden');
+            currentMeasurementTypeKasa = null;
+            return;
+        }
+        
+        currentMeasurementTypeKasa = productType;
+        renderMeasurementsKasa(productType);
+    }
+
+    // Render measurements function for Kasa
+    function renderMeasurementsKasa(productType) {
+        const section = document.getElementById('measurements-section-kasa');
+        const content = document.getElementById('measurements-content-kasa');
+        const title = document.getElementById('measurements-title-kasa');
+        
+        const data = measurementsData[productType];
+        if (!data) { 
+            section.classList.add('hidden'); 
+            return; 
+        }
+        
+        title.textContent = data.title;
+        
+        // Add note if exists
+        const existingNote = title.nextElementSibling;
+        if (existingNote && existingNote.classList.contains('text-gray-400')) {
+            existingNote.remove();
+        }
+        if (data.note) {
+            const noteEl = document.createElement('p');
+            noteEl.className = 'text-center text-gray-400 text-sm italic mt-2';
+            noteEl.textContent = data.note;
+            title.after(noteEl);
+        }
+
+        let html = '';
+        data.categories.forEach(category => {
+            html += `
+                <div class="col-span-full">
+                    <h4 class="text-xl font-bold text-white/90 mb-4 border-b border-white/10 pb-2">${category.name}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            `;
+
+            category.sizes.forEach(size => {
+                // Custom size badge
+                const customBadge = size.isCustom ? `
+                    <div class="absolute top-3 right-3 z-10">
+                        <span class="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            ÖZEL ÖLÇÜ
+                        </span>
+                    </div>
+                ` : '';
+                
+                // Handle multiple images or single image
+                let imageHtml = '';
+                if (size.images && size.images.length > 0) {
+                    // Multiple images - create grid
+                    imageHtml = `
+                        <div class="measurement-images-grid mb-4">
+                            ${size.images.map(img => `
+                                <div class="measurement-image-container cursor-pointer" onclick="openImageModal('${img}', '${size.dimension}')">
+                                    <img src="${img}" alt="${size.dimension}" class="measurement-image">
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (size.image) {
+                    // Single image
+                    imageHtml = `
+                        <div class="measurement-image-container mb-4 cursor-pointer" onclick="openImageModal('${size.image}', '${size.dimension}')">
+                            <img src="${size.image}" alt="${size.dimension}" class="measurement-image">
+                        </div>
+                    `;
+                } else {
+                    // No image - placeholder
+                    imageHtml = `
+                        <div class="mb-4">
+                            <div class="measurement-image-placeholder">
+                                <i class="fa-solid fa-image text-4xl mb-2"></i>
+                                <div>Görsel Bekleniyor</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="measurement-card ${size.isCustom ? 'custom-size-card' : ''}">
+                        ${customBadge}
+                        ${imageHtml}
+                        <div class="text-center">
+                            <h5 class="text-brand-wood text-lg font-bold mb-2">${size.dimension}</h5>
+                            ${size.type ? `<p class="text-white/70 text-sm mb-1">${size.type}</p>` : ''}
+                            ${size.capacity ? `<p class="text-white/50 text-xs">${size.capacity}</p>` : ''}
+                            ${size.isCustom ? `
+                                <div class="mt-3">
+                                    <p class="text-white/70 text-sm">
+                                        <i class="fa-solid fa-info-circle mr-1"></i>
+                                        İhtiyacınıza özel üretim
+                                    </p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        if (!html) html = `<p class="col-span-full text-center text-white/50">Örnek görseller hazırlanıyor.</p>`;
+        content.innerHTML = html;
+        section.classList.remove('hidden');
+        setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+    </script>
+    <script>
+    (function(){
+        const container = document.getElementById('canvas-container');
+        if(!container) return;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 10, 30);
+        const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5,10,7); scene.add(light);
+        const group = new THREE.Group(); scene.add(group);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 1 });
+        const planks = [];
+        for (let i=0;i<20;i++){
+            const geo = new THREE.BoxGeometry(8, 0.5, 1.6);
+            const m = new THREE.Mesh(geo, mat);
+            m.position.set((Math.random()-0.5)*40, (Math.random()-0.5)*10, (Math.random()-0.5)*40);
+            m.rotation.y = Math.random()*Math.PI;
+            group.add(m); planks.push(m);
+        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        const clock = new THREE.Clock();
+        (function animate(){ requestAnimationFrame(animate); const t = clock.getElapsedTime(); group.rotation.y = t*0.02; planks.forEach((p,i)=>{ p.position.z += Math.sin(t*0.3 + i)*0.003; p.rotation.x = Math.sin(t*0.2 + i)*0.02; }); renderer.render(scene, camera); })();
+    })();
+    </script>
+    <script>
+    // Navigation interceptor removed to avoid interfering with back-button behavior.
+
+    // Ensure proper page navigation on load
+    window.addEventListener('load', () => {
+        const hash = window.location.hash;
+        if (!hash || hash === '#main-categories' || hash === '') {
+            document.getElementById('main-categories')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    </script>
+    <script>
+    // Handle back to products navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.back-to-products').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Clear hash from URL
+                history.pushState("", document.title, window.location.pathname);
+                
+                // Hide all detail sections
+                document.querySelectorAll('.detail-section').forEach(s => s.style.display = 'none');
+                
+                // Show main categories
+                const main = document.getElementById('main-categories');
+                if (main) {
+                    main.style.display = 'flex';
+                    main.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    });
+    </script>
+
+</body>
+</html>

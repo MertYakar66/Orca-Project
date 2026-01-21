@@ -1,0 +1,9 @@
+.DS_Store
+*.mp4
+*.mov
+*.avi
+.vscode/
+*.tmp
+*.log
+.env
+node_modules/
