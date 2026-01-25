@@ -444,12 +444,62 @@ Varsa yazın, yoksa "YOK" yazın:`,
         return `${minutes}m ${remainingSeconds}s`;
     }
 
+    // Format order details as text for emails
+    function formatOrderDetails() {
+        return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 YENİ SİPARİŞ TALEBİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sipariş No: ${state.data.orderNumber}
+Tarih: ${new Date().toLocaleString('tr-TR')}
+Lead Skoru: ${state.data.leadScore}/100
+Form Süresi: ${state.data.formCompletionTime}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÜRÜN BİLGİLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ürün: ${state.data.productCategory}
+Boyut Tercihi: ${state.data.sizeType}
+Boyut: ${state.data.size}
+Yapı Tipi: ${state.data.structureType}
+Miktar: ${state.data.quantity}
+ISPM-15: ${state.data.ispmRequired}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TESLİMAT BİLGİLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Şehir: ${state.data.deliveryCity}
+Adres: ${state.data.deliveryAddress}
+Zaman Tercihi: ${state.data.deliveryTimeline}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MÜŞTERİ BİLGİLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Firma: ${state.data.companyName}
+Yetkili: ${state.data.contactName}
+Telefon: ${state.data.phoneNumber}
+Email: ${state.data.emailAddress}
+
+Ek Notlar: ${state.data.additionalNotes}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Kaynak: Website AI Asistanı
+Durum: Yeni - Bekliyor
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `.trim();
+    }
+
     // ============================================
-    // ORDER FINALIZATION
+    // ORDER FINALIZATION WITH EMAIL
     // ============================================
-    function finalizeOrder() {
+    async function finalizeOrder() {
+        const orderNumber = generateOrderNumber();
         const orderData = {
-            orderNumber: generateOrderNumber(),
+            orderNumber: orderNumber,
             timestamp: new Date().toISOString(),
             ...state.data,
             leadScore: calculateLeadScore(),
@@ -458,23 +508,44 @@ Varsa yazın, yoksa "YOK" yazın:`,
             status: 'Pending'
         };
 
+        // Add to state for formatting
+        state.data.orderNumber = orderNumber;
+        state.data.leadScore = orderData.leadScore;
+        state.data.formCompletionTime = orderData.formCompletionTime;
+
+        const orderDetails = formatOrderDetails();
+
         console.log('Order data ready:', orderData);
 
-        addMessage(`✅ Sipariş talebiniz kaydedildi!
+        try {
+            // Send emails via Netlify function
+            const response = await fetch('/.netlify/functions/send-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orderNumber: orderNumber,
+                    customerName: state.data.contactName,
+                    customerEmail: state.data.emailAddress,
+                    customerPhone: state.data.phoneNumber,
+                    companyName: state.data.companyName,
+                    orderDetails: orderDetails
+                })
+            });
 
-📧 Sipariş No: ${orderData.orderNumber}
+            const result = await response.json();
 
-Email onayı ${state.data.emailAddress} adresinize gönderilecek.
+            if (response.ok && result.success) {
+                // Success!
+                addMessage(`✅ Sipariş talebiniz başarıyla kaydedildi!
 
-⏱️ Satış ekibimiz 2 saat içinde size ulaşacak.
+📧 Sipariş No: ${orderNumber}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SONRAKI ADIMLAR:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✉️ Onay emaili ${state.data.emailAddress} adresinize gönderildi.
+📩 Satış ekibimize bildirim yapıldı.
 
-1. Email onayınızı kontrol edin
-2. Satış ekibimizin aramasını bekleyin
-3. Detaylı fiyat teklifi alın
+⏱️ Satış ekibimiz 2 saat içinde size dönüş yapacak.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ACELE Mİ EDİYORSUNUZ?
@@ -485,7 +556,32 @@ ACELE Mİ EDİYORSUNUZ?
 
 Teşekkürler! 🌲`, 'system');
 
-        state.isComplete = true;
+            } else {
+                throw new Error(result.error || 'Email gönderimi başarısız');
+            }
+
+            state.isComplete = true;
+
+        } catch (error) {
+            console.error('Order finalization error:', error);
+
+            // Fallback: show order details for manual contact
+            addMessage(`⚠️ Email sistemi henüz yapılandırılmadı.
+
+Sipariş bilgileriniz kaydedildi:
+
+📧 Sipariş No: ${orderNumber}
+
+Lütfen bu bilgileri şu yollarla iletin:
+
+💬 WhatsApp: ${CONFIG.WHATSAPP_DISPLAY}
+📞 Telefon: ${CONFIG.PHONE}
+📧 Email: orcaahsap@orcaahsap.com
+
+Satış ekibimiz size yardımcı olacaktır! 🙏`, 'system');
+
+            state.isComplete = true;
+        }
     }
 
     function showSummary() {

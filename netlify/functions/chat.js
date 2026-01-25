@@ -1,10 +1,6 @@
-// netlify/functions/chat.js
-// BACKEND - Handles Gemini API calls securely
-
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-  // Security: Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -12,23 +8,9 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Security: Check origin (optional but recommended)
-  const allowedOrigins = [
-    'https://your-site.netlify.app',
-    'https://orcaahsap.com',
-    'http://localhost:8888' // for local testing
-  ];
-  
-  const origin = event.headers.origin;
-  if (!allowedOrigins.includes(origin)) {
-    // Still allow but log suspicious activity
-    console.log('Request from unknown origin:', origin);
-  }
-
   try {
-    // Get API key from environment variable (secure)
     const API_KEY = process.env.GEMINI_API_KEY;
-    
+
     if (!API_KEY) {
       return {
         statusCode: 500,
@@ -36,8 +18,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Parse request body
-    const { message, conversationHistory } = JSON.parse(event.body);
+    const { message, context: orderContext } = JSON.parse(event.body);
 
     if (!message) {
       return {
@@ -46,7 +27,38 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Call Gemini API
+    // Smart validation prompt
+    const validationPrompt = `Sen ORCA Ahşap'ın sipariş asistanısın. Görevin müşterilere sipariş formunu doldurmada yardım etmek.
+
+Müşteri şu soruyu yanıtlıyor:
+"${orderContext?.question || 'Genel soru'}"
+
+Müşterinin cevabı: "${message}"
+
+Beklenen format: ${orderContext?.expectedFormat || 'serbest'}
+
+Şimdiye kadar toplanan bilgiler: ${JSON.stringify(orderContext?.currentData || {})}
+
+GÖREVİN:
+1. Müşterinin cevabının soruya uygun olup olmadığını kontrol et
+2. Eksik veya hatalı ise, nazik bir şekilde düzelt ve somut örnek ver
+3. Doğruysa, kısa ve olumlu bir onay ver
+
+KURALLAR:
+- Sadece Türkçe yanıt ver
+- Maksimum 2-3 cümle (kısa ve öz)
+- Dostça ve profesyonel ol
+- Müşteriye yardımcı olduğunu hissettir
+- Rakam bekliyorsan rakam iste, şehir bekliyorsan şehir iste
+- Eğer müşteri "bilmiyorum" veya belirsiz bir cevap verdiyse, seçenekler sun
+
+Örnek iyi yanıtlar:
+- "Teşekkürler! Miktar kaydedildi. Şimdi teslimat bilgilerine geçelim."
+- "Lütfen sadece rakam yazın. Örneğin: 100 (kaç adet istiyorsunuz?)"
+- "Şehir adını yazmanız gerekiyor. Örneğin: Bursa, İstanbul, Ankara"
+
+Yanıtını ver:`;
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
       {
@@ -56,13 +68,7 @@ exports.handler = async (event, context) => {
         },
         body: JSON.stringify({
           contents: [{
-            parts: [{ 
-              text: `Sen ORCA Ahşap sipariş asistanısın. Sadece Türkçe yanıt ver. Kısa ve net cevaplar ver (maksimum 280 karakter).
-
-Kullanıcı mesajı: ${message}
-
-Lütfen Türkçe yanıt ver.` 
-            }]
+            parts: [{ text: validationPrompt }]
           }],
           generationConfig: {
             temperature: 0.7,
@@ -76,26 +82,23 @@ Lütfen Türkçe yanıt ver.`
 
     const data = await response.json();
 
-    // Check for API errors
     if (!response.ok) {
       console.error('Gemini API error:', data);
       return {
         statusCode: response.status,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'AI service error',
           details: data.error?.message || 'Unknown error'
         })
       };
     }
 
-    // Extract response text
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Üzgünüm, yanıt oluşturamadım.';
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Üzgünüm, yanıt oluşturamadım. Lütfen tekrar deneyin.';
 
-    // Return success response
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': origin || '*',
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
       },
@@ -108,7 +111,7 @@ Lütfen Türkçe yanıt ver.`
 
   } catch (error) {
     console.error('Function error:', error);
-    
+
     return {
       statusCode: 500,
       headers: {
