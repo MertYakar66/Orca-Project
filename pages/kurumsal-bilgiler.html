@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurumsal | Orca Orman Ürünleri</title>
+
+    <!-- Design System & Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/design-system.css">`n    <link rel="stylesheet" href="../css/chat-widget.css">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation (Sticky Premium) -->
+    <nav
+        class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center pointer-events-auto premium-nav">
+
+        <a href="../index.html" class="flex items-center gap-4 cursor-pointer">
+            <img src="../assets/logo.png" alt="Orca Logo" class="h-20 w-auto object-contain drop-shadow-md">
+            <div class="text-white font-bold tracking-widest text-xl drop-shadow-md font-serif">ORCA ORMAN</div>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex gap-8 text-xs font-semibold tracking-widest text-white items-center">
+
+            <!-- KURUMSAL DROPDOWN -->
+            <div class="relative group dropdown">
+                <button class="nav-link-premium flex items-center gap-1">
+                    KURUMSAL <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </button>
+                <div class="dropdown-premium">
+                    <a href="kurumsal-bilgiler.html">KURUMSAL BİLGİLER</a>
+                    <a href="#hakkimizda">HAKKIMIZDA</a>
+                    <a href="#kalite-belgeler">KALİTE & BELGELERİMİZ</a>
+                </div>
+            </div>
+
+            <!-- URUNLER DROPDOWN -->
+            <div class="relative group dropdown">
+                <a href="../urunler.html" class="nav-link-premium flex items-center gap-1">
+                    ÜRÜNLER <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </a>
+                <div class="dropdown-premium">
+                    <a href="../urunler.html#cat-palet-detail">PALET ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kasa-detail">KASA ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kereste-detail">KERESTE VE LATA</a>
+                    <a href="../urunler.html#cat-kontrplak-detail">EBATLI KONTRPLAK</a>
+                </div>
+            </div>
+
+            <a href="#kariyer" class="nav-link-premium">KARİYER</a>
+            <a href="iletisim.html" class="nav-link-premium">İLETİŞİM</a>
+        </div>
+
+        <a href="iletisim.html" class="hidden md:block">
+            <button class="teklif-btn text-xs px-5 py-2">TEKLİF AL</button>
+        </a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-[url('../assets/genelfoto/IMG_2464.png')] bg-cover bg-center"></div>
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+        <div class="relative z-10 text-center px-4 fade-in-visible">
+            <span class="text-brand-wood text-sm font-bold uppercase tracking-[0.3em] mb-4 block">Orca Orman
+                Ürünleri</span>
+            <h1 class="text-5xl md:text-7xl font-serif font-bold text-white mb-6">Kurumsal</h1>
+            <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+        </div>
+    </section>
+
+    <!-- HAKKIMIZDA & SIRKET UNVANI -->
+    <section id="hakkimizda" class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+
+                <!-- Info Table (Existing Content) -->
+                <div class="glass-panel-premium p-8 fade-in-hidden">
+                    <h3 class="text-2xl font-serif font-bold text-white mb-8 border-b border-brand-wood/30 pb-4">
+                        <i class="fa-solid fa-file-contract text-brand-wood mr-3"></i>Şirket Bilgileri
+                    </h3>
+
+                    <div class="space-y-6">
+                        <div>
+                            <span class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Şirket
+                                Ünvanı</span>
+                            <p class="text-gray-300 text-sm leading-relaxed">ORCA Orman Ürünleri Doğrama Mobilya
+                                Dekorasyon İnşaat Taahhüt Sanayi ve Ticaret Limited Şirketi</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <span
+                                    class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Vergi
+                                    Dairesi</span>
+                                <p class="text-gray-300 text-sm">Çekirge</p>
+                            </div>
+                            <div>
+                                <span
+                                    class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Vergi
+                                    No</span>
+                                <p class="text-gray-300 text-sm">645 005 2601</p>
+                            </div>
+                            <div>
+                                <span
+                                    class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Mersis
+                                    No</span>
+                                <p class="text-gray-300 text-sm">0645-0052-6010-0010</p>
+                            </div>
+                            <div>
+                                <span
+                                    class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Sicil
+                                    No</span>
+                                <p class="text-gray-300 text-sm">44229</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hakkımızda Text (New Content) -->
+                <div class="space-y-8 fade-in-hidden">
+                    <div>
+                        <span class="text-brand-wood font-bold tracking-widest text-sm">HİKAYEMİZ</span>
+                        <h2 class="text-4xl font-serif font-bold text-white mt-2 mb-6">Firmamız Hakkında</h2>
+                        <div class="prose prose-invert prose-lg text-gray-300">
+                            <p class="leading-relaxed mb-6">
+                                1997 yılı Bursa Nilüfer ilçesi Çalı bölgesinde ve Gebze bölgesindeki şubemiz ile orman
+                                ürünleri sektörüne giren firmamız bugün 5000 m² alan üzerine kurulu kapalı alandan
+                                oluşan tesisimizde,<strong class="text-white"> Ahşap palet (Çam, Kavak, Kayın), Ahşap
+                                    Kasa (çam), inşaatlık çam kereste, plywood palet, Plywood kasa, osb kasa</strong>
+                                ile ilgili tecrübeli kadromuz ile üretim yapmaktadır. Ayrıca ebatlanmış kontrplak ve
+                                tabaka halinde kontrplak ve kontrplak satışı ile ilgili de hizmet sağlamaktadır.
+                            </p>
+                            <p class="leading-relaxed">
+                                Prensip edindiğimiz ve çalışanlarımıza da benimsettiğimiz kalite, uygun fiyat ve satış
+                                sonrası hizmet politikamızla müşterilerimizle birlikte büyümeye devam ediyoruz.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <img src="../assets/genelfoto/IMG_2466.png"
+                            class="rounded-2xl shadow-2xl hover:scale-105 transition duration-500 border border-white/10"
+                            alt="Fabrika İçi">
+                        <img src="../assets/genelfoto/IMG_2485.png"
+                            class="rounded-2xl shadow-2xl hover:scale-105 transition duration-500 border border-white/10"
+                            alt="Stok Alanı">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- MISYON & VIZYON -->
+    <section class="py-24 bg-gradient-to-b from-black/50 to-brand-wood/5 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+                <!-- Vizyon -->
+                <div class="glass-panel-premium p-10 relative group">
+                    <div
+                        class="absolute -top-6 -left-6 w-20 h-20 bg-brand-wood/20 rounded-full blur-2xl group-hover:bg-brand-wood/40 transition">
+                    </div>
+                    <i class="fa-solid fa-eye text-4xl text-brand-wood mb-6 relative z-10"></i>
+                    <h3 class="text-3xl font-serif font-bold text-white mb-6 relative z-10">Vizyonumuz</h3>
+                    <ul class="space-y-4 text-gray-300 relative z-10">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Bölgemizde Orman Ürünleri, Ahşap Ambalaj ve İnşaat sektöründe rekabetçi ve güçlü bir
+                                firma yaratmak.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Müşteri tatmini ve hizmet kalitesi konusunda kendi sahamızda sürekli lider firma
+                                pozisyonunda olmak.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Sürekli gelişen, büyüyen, güvenilir olma arzusunda, mutlak müşteri memnuniyeti
+                                ilkesinden taviz vermeyen bir firma olgusunu daima canlı tutmak.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Misyon -->
+                <div class="glass-panel-premium p-10 relative group">
+                    <div
+                        class="absolute -top-6 -right-6 w-20 h-20 bg-brand-wood/20 rounded-full blur-2xl group-hover:bg-brand-wood/40 transition">
+                    </div>
+                    <i class="fa-solid fa-bullseye text-4xl text-brand-wood mb-6 relative z-10"></i>
+                    <h3 class="text-3xl font-serif font-bold text-white mb-6 relative z-10">Misyonumuz</h3>
+                    <ul class="space-y-4 text-gray-300 relative z-10">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Müşteri isteklerini anlayarak mutlak mükemmellikte çözümler üretmek.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Firmamız ile ilgili hedefleri iyi tespit edip teknoloji ve sürekli gelişmeyi
+                                sağlayacak verimliliği yaratmak.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-brand-wood mt-1.5 text-xs"></i>
+                            <span>Orman Ürünleri, Ahşap Ambalaj ve İnşaat sektöründe piyasa ihtiyaçlarına göre ürünler
+                                üretmek ve pazarlamak.</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- KALITE & BELGELER -->
+    <section id="kalite-belgeler" class="py-24 relative">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <span class="text-brand-wood font-bold tracking-widest text-sm block mb-4">SERTİFİKALARIMIZ</span>
+            <h2 class="text-4xl md:text-5xl font-serif font-bold text-white mb-12">Kalite & Belgelerimiz</h2>
+
+            <div
+                class="glass-panel-premium p-12 flex flex-col items-center justify-center min-h-[300px] border-dashed border-2 border-brand-wood/30">
+                <i class="fa-regular fa-file-pdf text-6xl text-brand-wood/50 mb-6"></i>
+                <h3 class="text-xl text-white font-bold mb-2">Kalite Politikası ve Belgeler</h3>
+                <p class="text-gray-400 mb-8 max-w-md">Belgelerimiz dijital ortama aktarılma aşamasındadır. Yakında
+                    buradan erişebilirsiniz.</p>
+                <!-- Placeholder Image -->
+                <div class="w-full max-w-md h-48 bg-white/5 rounded-xl animate-pulse flex items-center justify-center">
+                    <span class="text-white/20 font-bold tracking-widest">BELGE GÖRSELİ</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- KARİYER -->
+    <section id="kariyer" class="py-24 bg-brand-wood/10 relative overflow-hidden">
+        <div class="max-w-5xl mx-auto px-6 relative z-10 text-center">
+            <h2 class="text-4xl font-serif font-bold text-white mb-6">Kariyer Fırsatları</h2>
+            <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                Büyüyen ekibimize katılmak ve Orca ailesinin bir parçası olmak ister misiniz?
+            </p>
+
+            <a href="mailto:ik@orcaahsap.com"
+                class="inline-flex items-center gap-3 bg-brand-wood text-black px-8 py-4 rounded-full font-bold hover:bg-white transition shadow-[0_0_20px_rgba(212,163,115,0.4)] group">
+                <i class="fa-solid fa-envelope group-hover:scale-110 transition"></i>
+                ik@orcaahsap.com
+            </a>
+            <p class="mt-4 text-xs text-gray-500">CV'nizi mail yoluyla iletebilirsiniz.</p>
+        </div>
+    </section>
+
+    <!-- Footer Section (Premium) -->
+    <footer class="premium-footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <img src="../assets/logo.png" alt="Orca Logo"
+                    class="h-24 w-auto mx-auto mb-6 opacity-80 grayscale hover:grayscale-0 transition duration-500">
+                <p class="text-gray-500 text-sm">© 2025 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Use Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-visible');
+                }
+            });
+        });
+        document.querySelectorAll('.fade-in-hidden').forEach(el => observer.observe(el));
+    </script>
+    <!-- ORCA AI Order Assistant -->`n    <script src="../js/orca-assistant.js"></script>`n</body>
+
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hakkımızda | Orca Orman Ürünleri</title>
+
+    <!-- Design System & Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/design-system.css">`n    <link rel="stylesheet" href="../css/chat-widget.css">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .hero-zoom {
+            animation: zoomEffect 20s infinite alternate;
+        }
+
+        @keyframes zoomEffect {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 1.5rem;
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation (Sticky Premium) -->
+    <nav
+        class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center pointer-events-auto premium-nav">
+
+        <a href="../index.html" class="flex items-center gap-4 cursor-pointer">
+            <img src="../assets/logo.png" alt="Orca Logo" class="h-32 w-auto object-contain drop-shadow-md">
+            <div class="text-white font-bold tracking-widest text-xl drop-shadow-md font-serif">ORCA ORMAN</div>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex gap-8 text-xs font-semibold tracking-widest text-white items-center">
+
+            <!-- KURUMSAL DROPDOWN -->
+            <div class="relative group dropdown">
+                <button class="nav-link-premium flex items-center gap-1 active">
+                    KURUMSAL <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </button>
+                <div class="dropdown-premium">
+                    <a href="hakkimizda.html">HAKKIMIZDA</a>
+                    <a href="misyon-vizyon.html">DEĞERLERİMİZ & BELGELER</a>
+                </div>
+            </div>
+
+            <!-- URUNLER DROPDOWN -->
+            <div class="relative group dropdown">
+                <a href="../urunler.html" class="nav-link-premium flex items-center gap-1">
+                    ÜRÜNLER <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </a>
+                <div class="dropdown-premium">
+                    <a href="../urunler.html#cat-palet-detail">PALET ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kasa-detail">KASA ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kereste-detail">KERESTE VE LATA</a>
+                    <a href="../urunler.html#cat-kontrplak-detail">EBATLI KONTRPLAK</a>
+                </div>
+            </div>
+
+            <a href="kariyer.html" class="nav-link-premium">KARİYER</a>
+            <a href="iletisim.html" class="nav-link-premium">İLETİŞİM</a>
+        </div>
+
+        <a href="iletisim.html" class="hidden md:block">
+            <button class="teklif-btn text-xs px-5 py-2">TEKLİF AL</button>
+        </a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 w-full h-full overflow-hidden">
+            <div class="absolute inset-0 bg-[url('../assets/genelfoto/IMG_2464.png')] bg-cover bg-center hero-zoom"
+                style="filter: brightness(0.4);"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-4 fade-in-visible">
+            <span
+                class="text-brand-wood text-sm font-bold uppercase tracking-[0.4em] mb-4 block animate-fade-in-up">Kurumsal</span>
+            <h1 class="text-6xl md:text-8xl font-serif font-bold text-white mb-6 animate-fade-in-up delay-100">
+                Hakkımızda</h1>
+            <div class="w-32 h-1 bg-brand-wood mx-auto rounded-full animate-fade-in-up delay-200"></div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <i class="fa-solid fa-chevron-down text-white/50 text-xl"></i>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <section class="py-24 relative overflow-hidden bg-[#0a0a0a]">
+        <!-- Background Elements -->
+        <div
+            class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#151515] to-transparent pointer-events-none">
+        </div>
+        <div class="absolute -left-64 top-40 w-96 h-96 bg-brand-wood/5 rounded-full blur-[100px] pointer-events-none">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+
+                <!-- Left Column: Story & Images (Span 7) -->
+                <div class="lg:col-span-7 space-y-12">
+                    <div class="fade-in-hidden">
+                        <span class="text-brand-wood font-bold tracking-widest text-sm flex items-center gap-3">
+                            <span class="w-8 h-[1px] bg-brand-wood"></span>
+                            HİKAYEMİZ
+                        </span>
+                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-white mt-4 mb-8 leading-tight">
+                            1997'den Günümüze <br>
+                            <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-brand-wood to-[#F5D576]">Ahşabın
+                                Gücü</span>
+                        </h2>
+                        <div class="prose prose-invert prose-lg text-gray-400">
+                            <p class="leading-relaxed mb-6">
+                                1997 yılı Bursa Nilüfer ilçesi Çalı bölgesinde ve Gebze bölgesindeki şubemiz ile orman
+                                ürünleri sektörüne giren firmamız bugün <strong class="text-white">5000 m²</strong> alan
+                                üzerine kurulu kapalı alandan oluşan tesisimizde faaliyet göstermektedir.
+                            </p>
+                            <p class="leading-relaxed mb-6">
+                                Üretim yelpazemiz; <strong class="text-brand-wood">Ahşap palet (Çam, Kavak, Kayın),
+                                    Ahşap Kasa, İnşaatlık Kereste, Plywood Palet, Plywood Kasa ve OSB Kasa</strong>
+                                çözümlerini kapsamaktadır. Ayrıca ebatlanmış ve tabaka halinde kontrplak tedariği ile
+                                endüstriyel çözüm ortaklığı sunuyoruz.
+                            </p>
+                            <p class="leading-relaxed">
+                                Prensip edindiğimiz ve çalışanlarımıza da benimsettiğimiz kalite, uygun fiyat ve satış
+                                sonrası hizmet politikamızla sektörde güvenin adresi olmaya devam ediyoruz.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Masonry Grid Images -->
+                    <div class="masonry-grid fade-in-hidden">
+                        <div class="masonry-item">
+                            <img src="../assets/genelfoto/IMG_2466.png"
+                                class="w-full rounded-2xl shadow-2xl hover:scale-[1.02] transition duration-700 border border-white/5"
+                                alt="Fabrika İçi">
+                        </div>
+                        <div class="masonry-item">
+                            <img src="../assets/genelfoto/IMG_2442.png"
+                                class="w-full rounded-2xl shadow-2xl hover:scale-[1.02] transition duration-700 border border-white/5"
+                                alt="Kereste İstif">
+                        </div>
+                        <div class="masonry-item">
+                            <img src="../assets/genelfoto/IMG_2458.png"
+                                class="w-full rounded-2xl shadow-2xl hover:scale-[1.02] transition duration-700 border border-white/5"
+                                alt="Üretim Hattı">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Official Info (Span 5) -->
+                <div class="lg:col-span-5">
+                    <div
+                        class="sticky top-32 glass-panel-premium p-8 lg:p-10 fade-in-hidden border-t-4 border-t-brand-wood">
+                        <h3
+                            class="text-2xl font-serif font-bold text-white mb-8 pb-4 border-b border-white/10 flex items-center justify-between">
+                            <span>Şirket Bilgileri</span>
+                            <i class="fa-solid fa-building-columns text-brand-wood/50"></i>
+                        </h3>
+
+                        <div class="space-y-6">
+                            <div class="group">
+                                <span
+                                    class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-2 group-hover:text-white transition">Şirket
+                                    Ünvanı</span>
+                                <p class="text-gray-300 text-sm leading-relaxed font-light">ORCA Orman Ürünleri Doğrama
+                                    Mobilya Dekorasyon İnşaat Taahhüt Sanayi ve Ticaret Limited Şirketi</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Vergi
+                                        Dairesi</span>
+                                    <p class="text-white text-sm">Çekirge</p>
+                                </div>
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Vergi
+                                        No</span>
+                                    <p class="text-white text-sm font-mono">645 005 2601</p>
+                                </div>
+
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Sicil
+                                        No</span>
+                                    <p class="text-white text-sm">44229</p>
+                                </div>
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Ticaret
+                                        Sicil</span>
+                                    <p class="text-white text-sm">Bursa Ticaret</p>
+                                </div>
+
+                                <div class="col-span-2">
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Mersis
+                                        No</span>
+                                    <p class="text-white text-sm font-mono tracking-wide">0645-0052-6010-0010</p>
+                                </div>
+
+                                <div class="col-span-2 border-t border-white/5 pt-4 mt-2">
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Adres</span>
+                                    <p class="text-gray-300 text-sm">Çalı Mah. Dönüş Cad. No:13 Nilüfer/Bursa</p>
+                                </div>
+
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Tescil
+                                        Tarihi</span>
+                                    <p class="text-white text-sm">01.10.1997</p>
+                                </div>
+                                <div>
+                                    <span
+                                        class="block text-brand-wood text-xs uppercase tracking-wider font-bold mb-1">Fatura
+                                        Adresi</span>
+                                    <p class="text-white text-xs">E-Fatura Mükellefi</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
+                            <img src="../assets/logo.png" class="h-12 opacity-50 grayscale" alt="Orca">
+                            <a href="iletisim.html"
+                                class="text-xs font-bold text-brand-wood hover:text-white transition flex items-center gap-2">
+                                İLETİŞİME GEÇ <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section (Premium) -->
+    <footer class="premium-footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <img src="../assets/logo.png" alt="Orca Logo"
+                    class="h-32 w-auto mx-auto mb-6 opacity-80 grayscale hover:grayscale-0 transition duration-500">
+                <p class="text-gray-500 text-sm">© 2025 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Use Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in-hidden').forEach(el => observer.observe(el));
+    </script>
+    <!-- ORCA AI Order Assistant -->`n    <script src="../js/orca-assistant.js"></script>`n</body>
+
+</html>

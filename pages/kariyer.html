@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kariyer | Orca Orman Ürünleri</title>
+
+    <!-- Design System & Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/design-system.css">`n    <link rel="stylesheet" href="../css/chat-widget.css">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation (Sticky Premium) -->
+    <nav
+        class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center pointer-events-auto premium-nav">
+
+        <a href="../index.html" class="flex items-center gap-4 cursor-pointer">
+            <img src="../assets/logo.png" alt="Orca Logo" class="h-32 w-auto object-contain drop-shadow-md">
+            <div class="text-white font-bold tracking-widest text-xl drop-shadow-md font-serif">ORCA ORMAN</div>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex gap-8 text-xs font-semibold tracking-widest text-white items-center">
+
+            <!-- KURUMSAL DROPDOWN -->
+            <div class="relative group dropdown">
+                <button class="nav-link-premium flex items-center gap-1">
+                    KURUMSAL <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </button>
+                <div class="dropdown-premium">
+                    <a href="hakkimizda.html">HAKKIMIZDA</a>
+                    <a href="misyon-vizyon.html">DEĞERLERİMİZ & BELGELER</a>
+                </div>
+            </div>
+
+            <!-- URUNLER DROPDOWN -->
+            <div class="relative group dropdown">
+                <a href="../urunler.html" class="nav-link-premium flex items-center gap-1">
+                    ÜRÜNLER <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </a>
+                <div class="dropdown-premium">
+                    <a href="../urunler.html#cat-palet-detail">PALET ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kasa-detail">KASA ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kereste-detail">KERESTE VE LATA</a>
+                    <a href="../urunler.html#cat-kontrplak-detail">EBATLI KONTRPLAK</a>
+                </div>
+            </div>
+
+            <a href="kariyer.html" class="nav-link-premium">KARİYER</a>
+            <a href="iletisim.html" class="nav-link-premium">İLETİŞİM</a>
+        </div>
+
+        <a href="iletisim.html" class="hidden md:block">
+            <button class="teklif-btn text-xs px-5 py-2">TEKLİF AL</button>
+        </a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-[url('../assets/genelfoto/IMG_2464.png')] bg-cover bg-center"></div>
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+        <div class="relative z-10 text-center px-4 fade-in-visible">
+            <span class="text-brand-wood text-sm font-bold uppercase tracking-[0.3em] mb-4 block">Orca Orman
+                Ürünleri</span>
+            <h1 class="text-5xl md:text-7xl font-serif font-bold text-white mb-6">Kariyer</h1>
+            <div class="w-24 h-1 bg-brand-wood mx-auto rounded-full"></div>
+        </div>
+    </section>
+
+    <!-- KARİYER -->
+    <section id="kariyer" class="py-24 bg-brand-wood/10 relative overflow-hidden">
+        <div class="max-w-5xl mx-auto px-6 relative z-10 text-center">
+            <h2 class="text-4xl font-serif font-bold text-white mb-6">Kariyer Fırsatları</h2>
+            <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                Büyüyen ekibimize katılmak ve Orca ailesinin bir parçası olmak ister misiniz?
+            </p>
+
+            <a href="mailto:ik@orcaahsap.com"
+                class="inline-flex items-center gap-3 bg-brand-wood text-black px-8 py-4 rounded-full font-bold hover:bg-white transition shadow-[0_0_20px_rgba(212,163,115,0.4)] group">
+                <i class="fa-solid fa-envelope group-hover:scale-110 transition"></i>
+                ik@orcaahsap.com
+            </a>
+            <p class="mt-4 text-xs text-gray-500">CV'nizi mail yoluyla iletebilirsiniz.</p>
+        </div>
+    </section>
+
+    <!-- Footer Section (Premium) -->
+    <footer class="premium-footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <img src="../assets/logo.png" alt="Orca Logo"
+                    class="h-32 w-auto mx-auto mb-6 opacity-80 grayscale hover:grayscale-0 transition duration-500">
+                <p class="text-gray-500 text-sm">© 2025 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Use Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-visible');
+                }
+            });
+        });
+        document.querySelectorAll('.fade-in-hidden').forEach(el => observer.observe(el));
+    </script>
+    <!-- ORCA AI Order Assistant -->`n    <script src="../js/orca-assistant.js"></script>`n</body>
+
+</html>

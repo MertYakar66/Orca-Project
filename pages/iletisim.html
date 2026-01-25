@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim | Orca Orman Ürünleri</title>
+
+    <!-- Design System & Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/design-system.css">`n    <link rel="stylesheet" href="../css/chat-widget.css">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .contact-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .contact-card:hover {
+            transform: translateY(-8px);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+            border-color: rgba(212, 163, 115, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon-box {
+            background: linear-gradient(135deg, #D4A373 0%, #a37a50 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .map-frame {
+            filter: grayscale(100%) invert(100%) contrast(1.2);
+            transition: all 0.5s ease;
+        }
+
+        .map-frame:hover {
+            filter: grayscale(0%) invert(0%) contrast(1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation (Sticky Premium) -->
+    <nav
+        class="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center pointer-events-auto premium-nav">
+
+        <a href="../index.html" class="flex items-center gap-4 cursor-pointer">
+            <img src="../assets/logo.png" alt="Orca Logo" class="h-32 w-auto object-contain drop-shadow-md">
+            <div class="text-white font-bold tracking-widest text-xl drop-shadow-md font-serif">ORCA ORMAN</div>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex gap-8 text-xs font-semibold tracking-widest text-white items-center">
+
+            <!-- KURUMSAL DROPDOWN -->
+            <div class="relative group dropdown">
+                <button class="nav-link-premium flex items-center gap-1">
+                    KURUMSAL <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </button>
+                <div class="dropdown-premium">
+                    <a href="hakkimizda.html">HAKKIMIZDA</a>
+                    <a href="misyon-vizyon.html">DEĞERLERİMİZ & BELGELER</a>
+                </div>
+            </div>
+
+            <!-- URUNLER DROPDOWN -->
+            <div class="relative group dropdown">
+                <a href="../urunler.html" class="nav-link-premium flex items-center gap-1">
+                    ÜRÜNLER <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                </a>
+                <div class="dropdown-premium">
+                    <a href="../urunler.html#cat-palet-detail">PALET ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kasa-detail">KASA ÇEŞİTLERİ</a>
+                    <a href="../urunler.html#cat-kereste-detail">KERESTE VE LATA</a>
+                    <a href="../urunler.html#cat-kontrplak-detail">EBATLI KONTRPLAK</a>
+                </div>
+            </div>
+
+            <a href="kariyer.html" class="nav-link-premium">KARİYER</a>
+            <a href="iletisim.html" class="nav-link-premium active">İLETİŞİM</a>
+        </div>
+
+        <a href="iletisim.html" class="hidden md:block">
+            <button class="teklif-btn text-xs px-5 py-2">TEKLİF AL</button>
+        </a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-[url('../assets/genelfoto/IMG_2458.png')] bg-cover bg-center"
+            style="filter: brightness(0.3) blur(2px);"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent"></div>
+
+        <div class="relative z-10 text-center px-4 fade-in-visible">
+            <span class="text-brand-wood text-sm font-bold uppercase tracking-[0.3em] mb-4 block">Bize Ulaşın</span>
+            <h1 class="text-5xl md:text-8xl font-serif font-bold text-white mb-6">İletişim</h1>
+            <p class="text-xl text-gray-300 font-light max-w-2xl mx-auto">
+                Sorularınız, projeleriniz ve iş birlikleriniz için uzman ekibimizle iletişime geçin.
+            </p>
+        </div>
+    </section>
+
+    <!-- CONTACT CHANNELS -->
+    <section class="py-24 relative -mt-32 z-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Phone Card -->
+                <a href="tel:02244822892"
+                    class="contact-card p-10 rounded-2xl text-center group cursor-pointer fade-in-hidden">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-brand-wood/20 transition">
+                        <i class="fa-solid fa-phone text-2xl text-brand-wood"></i>
+                    </div>
+                    <h3 class="text-2xl font-serif font-bold text-white mb-2">Bizi Arayın</h3>
+                    <p class="text-gray-400 text-sm mb-4">Hafta içi 08:00 - 17:30</p>
+                    <span class="text-xl font-bold text-white group-hover:text-brand-wood transition">0 224 482
+                        2892</span>
+                </a>
+
+                <!-- Email Card -->
+                <a href="mailto:orcaahsap@orcaahsap.com"
+                    class="contact-card p-10 rounded-2xl text-center group cursor-pointer fade-in-hidden"
+                    style="transition-delay: 100ms;">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-brand-wood/20 transition">
+                        <i class="fa-solid fa-envelope text-2xl text-brand-wood"></i>
+                    </div>
+                    <h3 class="text-2xl font-serif font-bold text-white mb-2">E-posta Gönderin</h3>
+                    <p class="text-gray-400 text-sm mb-4">En kısa sürede dönüş yapılır</p>
+                    <span
+                        class="text-xl font-bold text-white group-hover:text-brand-wood transition">orcaahsap@orcaahsap.com</span>
+                </a>
+
+                <!-- Location Card -->
+                <a href="#locations"
+                    class="contact-card p-10 rounded-2xl text-center group cursor-pointer fade-in-hidden"
+                    style="transition-delay: 200ms;">
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-brand-wood/20 transition">
+                        <i class="fa-solid fa-location-dot text-2xl text-brand-wood"></i>
+                    </div>
+                    <h3 class="text-2xl font-serif font-bold text-white mb-2">Fabrikamız</h3>
+                    <p class="text-gray-400 text-sm mb-4">Bursa & Kocaeli</p>
+                    <span class="text-xl font-bold text-white group-hover:text-brand-wood transition">Konumu
+                        Görüntüle</span>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- OFFICE LOCATIONS & MAP -->
+    <section id="locations" class="py-24 bg-[#0a0a0a] relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+
+                <!-- Info Side -->
+                <div class="space-y-12 fade-in-hidden">
+                    <div>
+                        <span
+                            class="text-brand-wood font-bold tracking-widest text-sm uppercase mb-2 block">LOKASYONLARIMIZ</span>
+                        <h2 class="text-4xl font-serif font-bold text-white mb-8">Üretim Tesislerimiz</h2>
+                        <p class="text-gray-400 leading-relaxed text-lg font-light">
+                            Bursa ve Gebze'deki modern tesislerimizde, yüksek kapasiteli üretim hattımız ve geniş stok
+                            alanlarımızla hizmet veriyoruz.
+                        </p>
+                    </div>
+
+                    <div class="space-y-8">
+                        <!-- Bursa -->
+                        <div class="flex gap-6 group">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-brand-wood/50 transition">
+                                <span class="font-bold text-brand-wood">01</span>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-white mb-2">Bursa Merkez Fabrika</h4>
+                                <p class="text-gray-400 mb-2">Çalı Mah. Dönüş Cad. No:13 Nilüfer/Bursa</p>
+                                <a href="https://maps.google.com/?q=Çalı+Mahallesi+Dönüş+Cadde+No:13+Çalı/Nilüfer/BURSA"
+                                    target="_blank"
+                                    class="text-brand-wood text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all">
+                                    Yol Tarifi Al <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Kocaeli -->
+                        <div class="flex gap-6 group">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-brand-wood/50 transition">
+                                <span class="font-bold text-brand-wood">02</span>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-white mb-2">Kocaeli Şube</h4>
+                                <p class="text-gray-400 mb-2">Kirazpınar Mahallesi, 2775 Sokak No: 1, Gebze/Kocaeli</p>
+                                <a href="https://maps.google.com/?q=Kirazpınar+Mahallesi+2775+Sokak+No:1+Gebze/Kocaeli"
+                                    target="_blank"
+                                    class="text-brand-wood text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all">
+                                    Yol Tarifi Al <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Side (Visual) -->
+                <div
+                    class="relative h-[500px] w-full rounded-2xl overflow-hidden border border-white/10 fade-in-hidden">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3049.260656037706!2d28.9134204!3d40.1743793!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14ca139199d99723%3A0xc665191630132b4!2sORCA%20ORMAN%20%C3%9CR%C3%9CNLER%C4%B0!5e0!3m2!1str!2str!4v1716499882000!5m2!1str!2str"
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade" class="map-frame">
+                    </iframe>
+                    <!-- Custom Overlay Marker Logic is CSS driven -->
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section (Premium) -->
+    <footer class="premium-footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <img src="../assets/logo.png" alt="Orca Logo"
+                    class="h-32 w-auto mx-auto mb-6 opacity-80 grayscale hover:grayscale-0 transition duration-500">
+                <p class="text-gray-500 text-sm">© 2025 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Use Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in-hidden').forEach(el => observer.observe(el));
+    </script>
+    <!-- ORCA AI Order Assistant -->`n    <script src="../js/orca-assistant.js"></script>`n</body>
+
+</html>

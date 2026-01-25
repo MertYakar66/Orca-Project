@@ -1,0 +1,280 @@
+/* ============================================
+   ORCA AI CHAT WIDGET STYLES
+   ============================================ */
+
+/* Chat Widget Container */
+#orca-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 380px;
+    max-width: calc(100vw - 40px);
+    height: 600px;
+    max-height: calc(100vh - 40px);
+    border: 2px solid #D4A373;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: none;
+    flex-direction: column;
+    z-index: 10000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#orca-chat-widget.open {
+    display: flex;
+}
+
+/* Chat Header */
+#orca-chat-header {
+    background: linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#orca-chat-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+#orca-chat-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+#orca-chat-close-btn:hover {
+    opacity: 0.7;
+}
+
+/* Messages Container */
+#orca-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+/* Message Bubbles */
+.orca-message {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 85%;
+    line-height: 1.5;
+    font-size: 14px;
+    white-space: pre-line;
+    word-wrap: break-word;
+}
+
+.orca-ai-message {
+    background: white;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.orca-user-message {
+    background: #D4A373;
+    color: white;
+    margin-left: auto;
+    border-radius: 12px 12px 0 12px;
+}
+
+.orca-system-message {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    color: #1565c0;
+    max-width: 100%;
+    text-align: center;
+    font-size: 12px;
+}
+
+.orca-error-message {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #c62828;
+    max-width: 100%;
+    font-size: 12px;
+}
+
+/* Input Area */
+#orca-chat-input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 0 0 14px 14px;
+    gap: 10px;
+}
+
+#orca-user-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+#orca-user-input:focus {
+    outline: none;
+    border-color: #D4A373;
+}
+
+#orca-send-btn {
+    padding: 12px 20px;
+    background: #D4A373;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+#orca-send-btn:hover {
+    background: #c49363;
+    transform: translateY(-1px);
+}
+
+#orca-send-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Floating Open Button */
+#orca-chat-open-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #D4A373 0%, #c49363 100%);
+    color: white;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(212, 163, 115, 0.4);
+    z-index: 9999;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#orca-chat-open-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(212, 163, 115, 0.5);
+}
+
+#orca-chat-open-btn.hidden {
+    display: none;
+}
+
+/* Typing Indicator */
+.orca-typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.orca-typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: orca-typing 1.4s infinite;
+}
+
+.orca-typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.orca-typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes orca-typing {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    #orca-chat-widget {
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        border: none;
+    }
+
+    #orca-chat-header {
+        border-radius: 0;
+    }
+
+    #orca-chat-input-area {
+        border-radius: 0;
+        padding: 10px;
+    }
+
+    #orca-chat-open-btn {
+        bottom: 15px;
+        right: 15px;
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+    }
+}
+
+/* Scrollbar Styling */
+#orca-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#orca-chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#orca-chat-messages::-webkit-scrollbar-thumb {
+    background: #D4A373;
+    border-radius: 3px;
+}
+
+#orca-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #c49363;
+}
