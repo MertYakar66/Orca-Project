@@ -1,8 +1,8 @@
 // ============================================
-// ORCA AI ORDER ASSISTANT
+// ORCA AI ORDER ASSISTANT - INTEGRATED VERSION
 // ============================================
-// Secure client-side chat widget that communicates
-// with Netlify serverless function for Gemini API
+// Uses existing YAPAY ZEKA MUHENDISI button and modal
+// Replaces old Gemini logic with secure backend + conversation flow
 
 (function () {
     'use strict';
@@ -22,7 +22,7 @@
     // CONVERSATION STATE
     // ============================================
     const state = {
-        step: 0,
+        step: -1, // -1 = waiting for EVET, 0+ = question steps
         data: {},
         history: [],
         startTime: Date.now(),
@@ -32,7 +32,7 @@
     };
 
     // ============================================
-    // QUESTIONS FLOW
+    // QUESTIONS FLOW (14 questions)
     // ============================================
     const QUESTIONS = {
         0: {
@@ -104,8 +104,7 @@ Lütfen şu formatta yazın:
 En × Boy × Yükseklik (cm)
 
 Örnek: 85 × 125 × 15
-veya
-Örnek: 150 × 100 × 80 (kasa için)`;
+veya kasa için: 150 × 100 × 80`;
                 }
             },
             validate: (input, s) => {
@@ -200,9 +199,7 @@ ISPM-15 sertifikası gerekiyor mu?
 1️⃣ Evet, ihracat için gerekli
 2️⃣ Hayır, yurtiçi kullanım
 
-Lütfen seçin: 1 veya 2
-
-ℹ️ ISPM-15 nedir? → WhatsApp: ${CONFIG.WHATSAPP_DISPLAY}`,
+Lütfen seçin: 1 veya 2`,
             validate: (input) => ['1', '2'].includes(input) ? true : "Lütfen 1 veya 2 seçin",
             process: (input) => input === '1' ? 'Evet (ISPM-15 gerekli)' : 'Hayır (Yurtiçi)'
         },
@@ -213,15 +210,15 @@ Lütfen seçin: 1 veya 2
 
 Lütfen şehir yazın:
 (Örnek: Bursa, İstanbul, Ankara, İzmir)`,
-            validate: (input) => input.length >= 3 ? true : "Lütfen şehir adı yazın",
+            validate: (input) => input.length >= 2 ? true : "Lütfen şehir adı yazın",
             process: (input) => input
         },
 
         7: {
             key: 'deliveryAddress',
             text: `Lütfen ilçe/mahalle/sanayi bölgesi belirtin:
-(Örnek: Nilüfer/Çalı Mahallesi veya OSB 2. Bölge)`,
-            validate: (input) => input.length >= 3 ? true : "Lütfen adres detayı yazın",
+(Örnek: Nilüfer/Çalı veya OSB 2. Bölge)`,
+            validate: (input) => input.length >= 2 ? true : "Lütfen adres detayı yazın",
             process: (input) => input
         },
 
@@ -311,39 +308,18 @@ Varsa yazın, yoksa "YOK" yazın:`,
     };
 
     // ============================================
-    // INJECT HTML
-    // ============================================
-    function injectChatHTML() {
-        const chatHTML = `
-            <button id="orca-chat-open-btn" title="Sipariş Asistanı">🤖</button>
-            <div id="orca-chat-widget">
-                <div id="orca-chat-header">
-                    <h3>🌲 ORCA Sipariş Asistanı</h3>
-                    <button id="orca-chat-close-btn">✕</button>
-                </div>
-                <div id="orca-chat-messages"></div>
-                <div id="orca-chat-input-area">
-                    <input type="text" id="orca-user-input" placeholder="Mesajınızı yazın..." autocomplete="off">
-                    <button id="orca-send-btn">Gönder</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', chatHTML);
-    }
-
-    // ============================================
-    // DOM ELEMENTS (initialized after injection)
+    // DOM ELEMENTS (existing in index.html)
     // ============================================
     let elements = {};
 
     function initElements() {
         elements = {
-            widget: document.getElementById('orca-chat-widget'),
-            messages: document.getElementById('orca-chat-messages'),
-            input: document.getElementById('orca-user-input'),
-            sendBtn: document.getElementById('orca-send-btn'),
-            openBtn: document.getElementById('orca-chat-open-btn'),
-            closeBtn: document.getElementById('orca-chat-close-btn')
+            modal: document.getElementById('ai-chat-modal'),
+            messagesContainer: document.getElementById('chat-messages-new'),
+            input: document.getElementById('user-message-input'),
+            // Buttons that open chat
+            toggleBtn: document.getElementById('chat-toggle-btn'),
+            widgetContainer: document.getElementById('ai-widget-container')
         };
     }
 
@@ -351,24 +327,79 @@ Varsa yazın, yoksa "YOK" yazın:`,
     // UTILITY FUNCTIONS
     // ============================================
     function addMessage(text, type = 'ai') {
-        const msg = document.createElement('div');
-        msg.className = `orca-message orca-${type}-message`;
-        msg.textContent = text;
-        elements.messages.appendChild(msg);
-        elements.messages.scrollTop = elements.messages.scrollHeight;
+        if (!elements.messagesContainer) return;
+
+        const msgWrapper = document.createElement('div');
+        msgWrapper.className = 'flex gap-3 items-start';
+
+        if (type === 'user') {
+            msgWrapper.className = 'flex gap-3 items-start justify-end';
+            msgWrapper.innerHTML = `
+                <div class="bg-brand-wood/20 rounded-2xl rounded-tr-none p-4 max-w-[80%]">
+                    <p class="text-white text-sm leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>
+                </div>
+            `;
+        } else if (type === 'system') {
+            msgWrapper.innerHTML = `
+                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-check text-white text-sm"></i>
+                </div>
+                <div class="bg-green-900/50 border border-green-600/30 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                    <p class="text-green-100 text-sm leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>
+                </div>
+            `;
+        } else {
+            msgWrapper.innerHTML = `
+                <div class="w-8 h-8 bg-brand-wood rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-robot text-black text-sm"></i>
+                </div>
+                <div class="bg-white/5 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                    <p class="text-white text-sm leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>
+                </div>
+            `;
+        }
+
+        elements.messagesContainer.appendChild(msgWrapper);
+        elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function clearMessages() {
+        if (elements.messagesContainer) {
+            elements.messagesContainer.innerHTML = '';
+        }
     }
 
     function showTyping() {
+        const typingId = 'orca-typing-indicator';
+        if (document.getElementById(typingId)) return;
+
         const typing = document.createElement('div');
-        typing.className = 'orca-message orca-typing-indicator';
-        typing.innerHTML = '<span></span><span></span><span></span>';
-        typing.id = 'orca-typing';
-        elements.messages.appendChild(typing);
-        elements.messages.scrollTop = elements.messages.scrollHeight;
+        typing.id = typingId;
+        typing.className = 'flex gap-3 items-start';
+        typing.innerHTML = `
+            <div class="w-8 h-8 bg-brand-wood rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-robot text-black text-sm"></i>
+            </div>
+            <div class="bg-white/5 rounded-2xl rounded-tl-none p-4">
+                <div class="flex gap-1">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                </div>
+            </div>
+        `;
+        elements.messagesContainer.appendChild(typing);
+        elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
     }
 
     function hideTyping() {
-        const typing = document.getElementById('orca-typing');
+        const typing = document.getElementById('orca-typing-indicator');
         if (typing) typing.remove();
     }
 
@@ -414,40 +445,6 @@ Varsa yazın, yoksa "YOK" yazın:`,
     }
 
     // ============================================
-    // API CALL (Secure backend)
-    // ============================================
-    async function callSecureBackend(message) {
-        try {
-            const response = await fetch(CONFIG.API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: message,
-                    conversationHistory: state.history
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.error || 'Unknown error');
-            }
-
-            return data.response;
-
-        } catch (error) {
-            console.error('API call failed:', error);
-            throw error;
-        }
-    }
-
-    // ============================================
     // ORDER FINALIZATION
     // ============================================
     function finalizeOrder() {
@@ -461,7 +458,6 @@ Varsa yazın, yoksa "YOK" yazın:`,
             status: 'Pending'
         };
 
-        // Log order data (in production, this would be sent to backend)
         console.log('Order data ready:', orderData);
 
         addMessage(`✅ Sipariş talebiniz kaydedildi!
@@ -490,12 +486,6 @@ ACELE Mİ EDİYORSUNUZ?
 Teşekkürler! 🌲`, 'system');
 
         state.isComplete = true;
-
-        setTimeout(() => {
-            addMessage('Yeni sipariş için sayfayı yenileyin.', 'system');
-            elements.input.disabled = true;
-            elements.sendBtn.disabled = true;
-        }, 2000);
     }
 
     function showSummary() {
@@ -535,6 +525,47 @@ Bilgiler doğru mu?
     // MAIN CONVERSATION LOGIC
     // ============================================
     function processUserInput(input) {
+        // Handle exit commands anywhere
+        if (['çıkış', 'iptal', 'vazgeçtim', 'exit', 'cancel'].includes(input.toLowerCase())) {
+            addMessage(`Sipariş talebinizi iptal ettiniz.
+
+Daha sonra devam etmek isterseniz tekrar gelin!
+
+💬 WhatsApp: ${CONFIG.WHATSAPP_DISPLAY}
+📞 Telefon: ${CONFIG.PHONE}
+
+İyi günler! 👋`, 'ai');
+            state.isComplete = true;
+            return;
+        }
+
+        // Waiting for EVET to start
+        if (state.step === -1) {
+            const normalized = input.toUpperCase().trim();
+            if (['EVET', 'YES', 'HAZIR', 'BAŞLA', 'BASLA', 'OK', 'TAMAM', 'E', 'EV'].includes(normalized)) {
+                state.step = 0;
+                setTimeout(() => {
+                    addMessage(QUESTIONS[0].text, 'ai');
+                }, 500);
+            } else {
+                addMessage('Başlamak için "EVET" yazın 😊', 'ai');
+            }
+            return;
+        }
+
+        // Confirmation step
+        if (state.step === 'confirmation') {
+            if (input === '1') {
+                finalizeOrder();
+            } else if (input === '2') {
+                addMessage('Düzeltme için sayfayı yenileyin ve tekrar başlayın.\n\nVeya WhatsApp: ' + CONFIG.WHATSAPP_DISPLAY, 'ai');
+            } else {
+                addMessage('Lütfen 1 (Gönder) veya 2 (Düzelt) seçin', 'ai');
+            }
+            return;
+        }
+
+        // Regular question processing
         const currentQ = QUESTIONS[state.step];
         if (!currentQ) return;
 
@@ -558,58 +589,22 @@ Bilgiler doğru mu?
                 const nextQ = QUESTIONS[state.step];
                 const questionText = typeof nextQ.text === 'function' ? nextQ.text(state) : nextQ.text;
                 addMessage(questionText, 'ai');
-            }, 800);
+            }, 600);
         } else {
-            setTimeout(() => showSummary(), 1000);
+            setTimeout(() => showSummary(), 800);
         }
     }
 
     // ============================================
-    // EVENT HANDLERS
+    // START CONVERSATION
     // ============================================
-    function handleSend() {
-        const input = elements.input.value.trim();
-        if (!input) return;
-
-        addMessage(input, 'user');
-        elements.input.value = '';
-
-        // Check for exit commands
-        if (['çıkış', 'iptal', 'vazgeçtim', 'exit', 'cancel'].includes(input.toLowerCase())) {
-            addMessage(`Sipariş talebinizi iptal ettiniz.
-
-Daha sonra devam etmek isterseniz tekrar gelin!
-
-💬 WhatsApp: ${CONFIG.WHATSAPP_DISPLAY}
-📞 Telefon: ${CONFIG.PHONE}
-
-İyi günler! 👋`, 'ai');
-            state.isComplete = true;
-            return;
-        }
-
-        if (state.step === 'confirmation') {
-            if (input === '1') {
-                finalizeOrder();
-            } else if (input === '2') {
-                addMessage('Düzeltme yapmak için sayfayı yenileyin ve tekrar başlayın. Veya WhatsApp üzerinden iletişime geçin: ' + CONFIG.WHATSAPP_DISPLAY, 'ai');
-            } else {
-                addMessage('Lütfen 1 (Gönder) veya 2 (Düzelt) seçin', 'ai');
-            }
-            return;
-        }
-
-        showTyping();
-        setTimeout(() => {
-            hideTyping();
-            processUserInput(input);
-        }, 600);
-    }
-
     function startConversation() {
         if (state.isStarted) return;
         state.isStarted = true;
         state.startTime = Date.now();
+        state.step = -1;
+
+        clearMessages();
 
         addMessage(`Merhaba! 👋 ORCA Ahşap sipariş asistanıyım.
 
@@ -624,74 +619,69 @@ Hazır mısınız?
 Başlamak için "EVET" yazın.`, 'ai');
     }
 
-    function handleStartResponse(input) {
-        const normalized = input.toUpperCase().trim();
-        if (['EVET', 'YES', 'HAZIR', 'BAŞLA', 'BASLA', 'OK', 'TAMAM'].includes(normalized)) {
-            state.step = 0;
-            setTimeout(() => {
-                addMessage(QUESTIONS[0].text, 'ai');
-            }, 600);
-            return true;
-        }
-        return false;
+    // ============================================
+    // OVERRIDE EXISTING FUNCTIONS
+    // ============================================
+    function handleSend() {
+        if (!elements.input) return;
+
+        const input = elements.input.value.trim();
+        if (!input) return;
+        if (state.isComplete) return;
+
+        addMessage(input, 'user');
+        elements.input.value = '';
+
+        showTyping();
+        setTimeout(() => {
+            hideTyping();
+            processUserInput(input);
+        }, 500);
     }
 
     // ============================================
     // INITIALIZATION
     // ============================================
     function init() {
-        injectChatHTML();
         initElements();
 
-        // Open button click
-        elements.openBtn.addEventListener('click', () => {
-            elements.widget.classList.add('open');
-            elements.openBtn.classList.add('hidden');
+        if (!elements.modal || !elements.messagesContainer) {
+            console.warn('ORCA Assistant: Required elements not found, retrying...');
+            setTimeout(init, 500);
+            return;
+        }
+
+        // Override the sendMessage function
+        window.sendMessage = handleSend;
+
+        // Override openAIChat to start our conversation
+        const originalOpenAIChat = window.openAIChat;
+        window.openAIChat = function () {
+            if (originalOpenAIChat) originalOpenAIChat();
             if (!state.isStarted) {
-                setTimeout(() => startConversation(), 300);
+                setTimeout(startConversation, 300);
             }
-            elements.input.focus();
-        });
+        };
 
-        // Close button click
-        elements.closeBtn.addEventListener('click', () => {
-            elements.widget.classList.remove('open');
-            elements.openBtn.classList.remove('hidden');
-        });
-
-        // Send button click
-        elements.sendBtn.addEventListener('click', () => {
-            const input = elements.input.value.trim();
-            if (!input) return;
-
-            // Check if we're waiting for EVET to start
-            if (state.isStarted && state.step === 0 && state.history.length === 0) {
-                addMessage(input, 'user');
-                elements.input.value = '';
-                if (!handleStartResponse(input)) {
-                    addMessage('Başlamak için "EVET" yazın 😊', 'ai');
+        // Also handle the Enter key
+        if (elements.input) {
+            elements.input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSend();
                 }
-                return;
-            }
+            });
+        }
 
-            handleSend();
-        });
-
-        // Enter key in input
-        elements.input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                elements.sendBtn.click();
-            }
-        });
-
-        console.log('ORCA AI Assistant initialized');
+        console.log('ORCA AI Assistant (Integrated) initialized');
     }
 
-    // Wait for DOM to be ready
+    // Wait for DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-        init();
+        // Delay slightly to ensure other scripts have run
+        setTimeout(init, 100);
     }
 
 })();

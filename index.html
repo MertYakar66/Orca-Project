@@ -2657,230 +2657,27 @@
 
     <script>
         // ==============================================
-        // YAPAY ZEKA CHAT FUNCTIONS - GOOGLE GEMINI
+        // AI CHAT MODAL FUNCTIONS
+        // (Chat logic handled by js/orca-assistant.js)
         // ==============================================
-
-        // IMPORTANT: Replace with your actual Google Gemini API key
-        const GEMINI_API_KEY = 'YOUR_GOOGLE_GEMINI_API_KEY_HERE';
-
-        // API endpoint
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-        // Conversation history
-        let conversationHistory = [];
-
-        // System context for the AI
-        const SYSTEM_CONTEXT = `Sen Orca Orman Ürünleri şirketinin yapay zeka asistanısın. 
-
-ŞİRKET BİLGİLERİ:
-• 1997'den beri ahşap palet, kasa, kereste ve kontrplak üretimi
-• İki fabrika: Çalı/Nilüfer/Bursa ve Gebze/Kocaeli
-• Ana müşteri: Ford Otosan ve diğer otomotiv firmaları
-• ISPM-15 sertifikalı uluslararası standartlarda üretim
-
-ÜRÜNLER:
-• Ahşap Palet (Altı Kapalı/Açık): 80×120, 100×120, 98×114, 132×114, 146×114, 170×114, 198×114 cm
-• Kontrplak Palet: Aynı ölçüler, 500 kg kapasiteli
-• 2. El Palet: Mevcut
-• EPAL Sertifikalı Palet: 80×120 cm, 1500 kg
-• Ahşap Kasa (Kargas): Özel ölçü
-• Kontrplak Kasa: Özel ölçü
-• OSB Kasa: Özel ölçü
-• Ahşap & Kontrplak Hibrit Kasa: Özel ölçü
-• Kereste: Çam, Kayın, Meşe
-• Kontrplak: Standart ve su geçirmez
-
-İLETİŞİM:
-• Çalı Fabrika: 0 224 482 2892
-• Kocaeli Şube: 0 533 660 5802
-• Email: orcaahsap@orcaahsap.com
-• Firma Sahibi: Orhan Bülent YAKAR (0532 467 2335)
-• Satış & Pazarlama: Güray VATANSEVER (0533 660 5802)
-
-GÖREVİN:
-1. Her zaman Türkçe cevap ver
-2. Profesyonel ve yardımsever ol
-3. Ürün bilgileri ver, fiyat teklifi almalarına yardımcı ol
-4. Özel ölçü üretim yapabileceklerini vurgula
-5. Eğer cevabı bilmiyorsan, müşteriyi doğrudan iletişime yönlendir
-6. Kısa ve öz cevaplar ver (2-3 paragraf max)
-
-ÖRNEK CEVAPLAR:
-Müşteri: "80×120 palet fiyatı nedir?"
-Sen: "80×120 cm ahşap paletimiz hem altı kapalı hem altı açık versiyonda mevcut. Altı açık hafif model 300-400 kg, ağır model 500-600 kg taşıma kapasiteli. Fiyat teklifi için miktar bilgisine ihtiyacım var. 0 224 482 2892 numarasından bizi arayabilir veya orcaahsap@orcaahsap.com adresine mail atabilirsiniz."
-
-Müşteri: "Özel ölçü kasa yaptırabilir miyim?"
-Sen: "Elbette! Tüm kasa çeşitlerimizi (ahşap, kontrplak, OSB, hibrit) tamamen özel ölçülerde üretiyoruz. İhtiyacınız olan boyutları ve miktarı belirtirseniz size özel teklif hazırlayabiliriz. Telefon: 0 224 482 2892"`;
 
         // Open AI Chat Modal
         function openAIChat() {
-            document.getElementById('ai-chat-modal').classList.remove('hidden');
-            document.getElementById('ai-chat-modal').classList.add('flex');
-            document.getElementById('user-message-input').focus();
+            const modal = document.getElementById('ai-chat-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('user-message-input')?.focus();
+            }
         }
 
         // Close AI Chat Modal
         function closeAIChat() {
-            document.getElementById('ai-chat-modal').classList.add('hidden');
-            document.getElementById('ai-chat-modal').classList.remove('flex');
-        }
-
-        // Send Message to Gemini AI
-        async function sendMessage() {
-            const input = document.getElementById('user-message-input');
-            const message = input.value.trim();
-
-            if (!message) return;
-
-            // Check if API key is set
-            if (GEMINI_API_KEY === 'YOUR_GOOGLE_GEMINI_API_KEY_HERE') {
-                addMessageToChat('⚠️ Yapay zeka henüz yapılandırılmamış. Lütfen doğrudan bizimle iletişime geçin:\n\n📞 0 224 482 2892\n📧 orcaahsap@orcaahsap.com', 'assistant');
-                input.value = '';
-                return;
+            const modal = document.getElementById('ai-chat-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
-
-            // Add user message to chat
-            addMessageToChat(message, 'user');
-            input.value = '';
-
-            // Add to history
-            conversationHistory.push({
-                role: 'user',
-                parts: [{ text: message }]
-            });
-
-            // Show typing indicator
-            const typingId = addTypingIndicator();
-
-            try {
-                // Prepare request
-                const requestBody = {
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [{ text: SYSTEM_CONTEXT }]
-                        },
-                        ...conversationHistory
-                    ],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 500,
-                        topP: 0.8,
-                        topK: 40
-                    }
-                };
-
-                // Call Gemini API
-                const response = await fetch(GEMINI_API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                // Extract AI response
-                const aiMessage = data.candidates[0].content.parts[0].text;
-
-                // Remove typing indicator
-                removeTypingIndicator(typingId);
-
-                // Add AI response to chat
-                addMessageToChat(aiMessage, 'assistant');
-
-                // Add to history
-                conversationHistory.push({
-                    role: 'model',
-                    parts: [{ text: aiMessage }]
-                });
-
-                // Limit conversation history to last 10 messages (5 exchanges)
-                if (conversationHistory.length > 10) {
-                    conversationHistory = conversationHistory.slice(-10);
-                }
-
-            } catch (error) {
-                console.error('Gemini AI Hatası:', error);
-                removeTypingIndicator(typingId);
-
-                addMessageToChat('Üzgünüm, şu anda bir teknik sorun yaşıyorum. Lütfen doğrudan bizimle iletişime geçin:\n\n📞 Çalı Fabrika: 0 224 482 2892\n📞 Kocaeli Şube: 0 533 660 5802\n📧 orcaahsap@orcaahsap.com', 'assistant');
-            }
-        }
-
-        // Add Message to Chat UI
-        function addMessageToChat(message, sender) {
-            const chatMessages = document.getElementById('chat-messages-new');
-            const messageDiv = document.createElement('div');
-
-            if (sender === 'user') {
-                messageDiv.className = 'flex gap-3 items-start justify-end';
-                messageDiv.innerHTML = `
-                <div class="bg-brand-wood rounded-2xl rounded-tr-none p-4 max-w-[80%]">
-                    <p class="text-black text-sm leading-relaxed whitespace-pre-line">${escapeHtml(message)}</p>
-                </div>
-                <div class="w-8 h-8 bg-brand-leaf rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-user text-white text-sm"></i>
-                </div>
-            `;
-            } else {
-                messageDiv.className = 'flex gap-3 items-start';
-                messageDiv.innerHTML = `
-                <div class="w-8 h-8 bg-brand-wood rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-robot text-black text-sm"></i>
-                </div>
-                <div class="bg-white/5 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
-                    <p class="text-white text-sm leading-relaxed whitespace-pre-line">${escapeHtml(message)}</p>
-                </div>
-            `;
-            }
-
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Add Typing Indicator
-        function addTypingIndicator() {
-            const chatMessages = document.getElementById('chat-messages-new');
-            const typingDiv = document.createElement('div');
-            const typingId = 'typing-' + Date.now();
-            typingDiv.id = typingId;
-            typingDiv.className = 'flex gap-3 items-start';
-            typingDiv.innerHTML = `
-            <div class="w-8 h-8 bg-brand-wood rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid fa-robot text-black text-sm"></i>
-            </div>
-            <div class="bg-white/5 rounded-2xl rounded-tl-none p-4">
-                <div class="flex gap-1">
-                    <div class="w-2 h-2 bg-brand-wood rounded-full animate-bounce"></div>
-                    <div class="w-2 h-2 bg-brand-wood rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                    <div class="w-2 h-2 bg-brand-wood rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-                </div>
-            </div>
-        `;
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            return typingId;
-        }
-
-        // Remove Typing Indicator
-        function removeTypingIndicator(typingId) {
-            const typingDiv = document.getElementById(typingId);
-            if (typingDiv) {
-                typingDiv.remove();
-            }
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         // Close modal when clicking outside
@@ -2889,6 +2686,11 @@ Sen: "Elbette! Tüm kasa çeşitlerimizi (ahşap, kontrplak, OSB, hibrit) tamame
                 closeAIChat();
             }
         });
+
+        // sendMessage is overridden by orca-assistant.js
+        function sendMessage() {
+            console.log('sendMessage called - waiting for orca-assistant.js');
+        }
     </script>
 
     <!-- Scroll to Top Button -->
