@@ -1,280 +1,512 @@
 /* ============================================
-   ORCA AI CHAT WIDGET STYLES
+   ORCA AI ASSISTANT - REVISED DUAL-PATH STYLES
    ============================================ */
 
-/* Chat Widget Container */
-#orca-chat-widget {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    height: 600px;
-    max-height: calc(100vh - 40px);
-    border: 2px solid #D4A373;
-    border-radius: 16px;
-    background: white;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    display: none;
-    flex-direction: column;
-    z-index: 10000;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+/* ============================================
+   SCREEN CONTAINER
+   ============================================ */
+.orca-screen {
+    padding: 1rem;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
-#orca-chat-widget.open {
-    display: flex;
-}
-
-/* Chat Header */
-#orca-chat-header {
-    background: linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 14px 14px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#orca-chat-header h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-}
-
-#orca-chat-close-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
+/* ============================================
+   PROGRESS INDICATOR
+   ============================================ */
+.orca-progress {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
-#orca-chat-close-btn:hover {
-    opacity: 0.7;
-}
-
-/* Messages Container */
-#orca-chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    background: #f8f9fa;
-}
-
-/* Message Bubbles */
-.orca-message {
-    margin: 12px 0;
-    padding: 12px 16px;
-    border-radius: 12px;
-    max-width: 85%;
-    line-height: 1.5;
-    font-size: 14px;
-    white-space: pre-line;
-    word-wrap: break-word;
-}
-
-.orca-ai-message {
-    background: white;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.orca-user-message {
-    background: #D4A373;
-    color: white;
-    margin-left: auto;
-    border-radius: 12px 12px 0 12px;
-}
-
-.orca-system-message {
-    background: #e3f2fd;
-    border-left: 4px solid #2196f3;
-    color: #1565c0;
-    max-width: 100%;
-    text-align: center;
-    font-size: 12px;
-}
-
-.orca-error-message {
-    background: #ffebee;
-    border-left: 4px solid #f44336;
-    color: #c62828;
-    max-width: 100%;
-    font-size: 12px;
-}
-
-/* Input Area */
-#orca-chat-input-area {
+.orca-progress span {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     display: flex;
-    padding: 15px;
-    border-top: 1px solid #e0e0e0;
-    background: white;
-    border-radius: 0 0 14px 14px;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
 }
 
-#orca-user-input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-    transition: border-color 0.2s;
+.orca-progress span.active {
+    background: linear-gradient(135deg, #D4A373, #E8C39E);
+    color: #1a2e1a;
+    box-shadow: 0 0 15px rgba(212, 163, 115, 0.4);
 }
 
-#orca-user-input:focus {
+.orca-progress span.done {
+    background: #22c55e;
+    color: white;
+}
+
+.orca-progress .line {
+    width: 30px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.orca-progress .line.done {
+    background: #22c55e;
+}
+
+/* ============================================
+   WELCOME SCREEN PATH BUTTONS
+   ============================================ */
+.orca-path-btn {
+    width: 100%;
+    padding: 1.25rem;
+    border-radius: 1rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.orca-path-btn.whatsapp-btn {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+}
+
+.orca-path-btn.whatsapp-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+}
+
+.orca-path-btn.ai-btn {
+    background: linear-gradient(135deg, #1a2e1a, #2d4a2d);
+    border: 2px solid rgba(212, 163, 115, 0.3);
+}
+
+.orca-path-btn.ai-btn:hover {
+    border-color: #D4A373;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(212, 163, 115, 0.2);
+}
+
+/* ============================================
+   CATEGORY BUTTONS (Product Selection)
+   ============================================ */
+.orca-category-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 80px;
+}
+
+.orca-category-btn:hover {
+    background: rgba(212, 163, 115, 0.1);
+    border-color: rgba(212, 163, 115, 0.3);
+    transform: translateY(-2px);
+}
+
+.orca-category-btn.selected {
+    background: linear-gradient(135deg, rgba(212, 163, 115, 0.2), rgba(232, 195, 158, 0.1));
+    border-color: #D4A373;
+    box-shadow: 0 0 15px rgba(212, 163, 115, 0.2);
+}
+
+/* ============================================
+   FORM FIELDS
+   ============================================ */
+.orca-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.orca-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.orca-field label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.orca-field input,
+.orca-field select,
+.orca-field textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.orca-field input:focus,
+.orca-field select:focus,
+.orca-field textarea:focus {
     outline: none;
     border-color: #D4A373;
+    background: rgba(212, 163, 115, 0.05);
+    box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.1);
 }
 
-#orca-send-btn {
-    padding: 12px 20px;
-    background: #D4A373;
+.orca-field input::placeholder,
+.orca-field textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.orca-field select option {
+    background: #1a2e1a;
     color: white;
-    border: none;
-    border-radius: 8px;
+}
+
+.orca-hint {
+    font-size: 0.75rem;
+    color: rgba(212, 163, 115, 0.8);
+}
+
+/* ============================================
+   TOGGLE BUTTONS
+   ============================================ */
+.orca-toggle-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.orca-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.orca-toggle-btn.active {
+    background: linear-gradient(135deg, #D4A373, #E8C39E);
+    border-color: #D4A373;
+    color: #1a2e1a;
     font-weight: 600;
-    font-size: 14px;
-    transition: background 0.3s, transform 0.2s;
 }
 
-#orca-send-btn:hover {
-    background: #c49363;
-    transform: translateY(-1px);
+/* ============================================
+   MEDIA BUTTONS (Photo/Voice)
+   ============================================ */
+.orca-media-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
 }
 
-#orca-send-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Floating Open Button */
-#orca-chat-open-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #D4A373 0%, #c49363 100%);
-    color: white;
-    border: none;
-    font-size: 28px;
+.orca-media-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(212, 163, 115, 0.4);
-    z-index: 9999;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.orca-media-btn:hover {
+    background: rgba(212, 163, 115, 0.1);
+    border-color: rgba(212, 163, 115, 0.3);
+    color: white;
+}
+
+.orca-attachments,
+.orca-voice-note {
+    padding: 0.5rem 0.75rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 0.5rem;
+    color: #86efac;
+    font-size: 0.75rem;
+}
+
+/* ============================================
+   NAVIGATION BUTTONS
+   ============================================ */
+.orca-nav-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.orca-btn-primary,
+.orca-btn-secondary {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.orca-btn-primary {
+    background: linear-gradient(135deg, #D4A373, #E8C39E);
+    color: #1a2e1a;
+}
+
+.orca-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(212, 163, 115, 0.3);
+}
+
+.orca-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.orca-btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.orca-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   CONFIRMATION SCREEN
+   ============================================ */
+.orca-summary {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.orca-summary-section {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.orca-summary-section:last-child {
+    border-bottom: none;
+}
+
+.orca-summary-section h3 {
+    color: #D4A373;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.orca-summary-section p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+}
+
+.orca-edit-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    color: rgba(212, 163, 115, 0.8);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.orca-edit-btn:hover {
+    color: #D4A373;
+}
+
+/* ============================================
+   SUBMIT OPTIONS
+   ============================================ */
+.orca-submit-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.orca-submit-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.orca-submit-btn.email {
+    background: linear-gradient(135deg, #1a2e1a, #2d4a2d);
+    border-color: rgba(212, 163, 115, 0.3);
+    color: white;
+}
+
+.orca-submit-btn.email:hover {
+    border-color: #D4A373;
+    transform: translateY(-2px);
+}
+
+.orca-submit-btn.whatsapp {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+}
+
+.orca-submit-btn.whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(37, 211, 102, 0.3);
+}
+
+.orca-submit-btn.both {
+    background: linear-gradient(135deg, #D4A373, #E8C39E);
+    color: #1a2e1a;
+}
+
+.orca-submit-btn.both:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(212, 163, 115, 0.4);
+}
+
+/* ============================================
+   SUCCESS SCREEN
+   ============================================ */
+.success-screen {
+    text-align: center;
+}
+
+.orca-success-details {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.orca-success-item {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+    padding: 0.25rem 0;
 }
 
-#orca-chat-open-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(212, 163, 115, 0.5);
+.orca-response-time {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
 }
 
-#orca-chat-open-btn.hidden {
-    display: none;
+.orca-response-time p {
+    margin: 0.25rem 0;
 }
 
-/* Typing Indicator */
-.orca-typing-indicator {
-    display: flex;
-    gap: 4px;
-    padding: 12px 16px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    width: fit-content;
+.orca-urgent-contact {
+    background: rgba(212, 163, 115, 0.1);
+    border: 1px solid rgba(212, 163, 115, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    color: white;
+    font-size: 0.875rem;
 }
 
-.orca-typing-indicator span {
-    width: 8px;
-    height: 8px;
-    background: #999;
-    border-radius: 50%;
-    animation: orca-typing 1.4s infinite;
+.orca-urgent-contact a {
+    color: #D4A373;
+    text-decoration: none;
 }
 
-.orca-typing-indicator span:nth-child(2) {
-    animation-delay: 0.2s;
+.orca-urgent-contact a:hover {
+    text-decoration: underline;
 }
 
-.orca-typing-indicator span:nth-child(3) {
-    animation-delay: 0.4s;
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+@media (max-width: 640px) {
+    .orca-screen {
+        padding: 0.75rem;
+    }
+
+    .orca-category-btn {
+        padding: 0.75rem 0.25rem;
+        min-height: 70px;
+    }
+
+    .orca-category-btn .text-2xl {
+        font-size: 1.5rem;
+    }
+
+    .orca-category-btn .text-sm {
+        font-size: 0.7rem;
+    }
+
+    .orca-nav-buttons {
+        flex-direction: column;
+    }
+
+    .orca-submit-options {
+        gap: 0.5rem;
+    }
 }
 
-@keyframes orca-typing {
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-    0%,
-    60%,
-    100% {
+    to {
+        opacity: 1;
         transform: translateY(0);
     }
-
-    30% {
-        transform: translateY(-10px);
-    }
 }
 
-/* Mobile Responsive */
-@media (max-width: 480px) {
-    #orca-chat-widget {
-        bottom: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        max-width: 100%;
-        max-height: 100%;
-        border-radius: 0;
-        border: none;
-    }
-
-    #orca-chat-header {
-        border-radius: 0;
-    }
-
-    #orca-chat-input-area {
-        border-radius: 0;
-        padding: 10px;
-    }
-
-    #orca-chat-open-btn {
-        bottom: 15px;
-        right: 15px;
-        width: 56px;
-        height: 56px;
-        font-size: 24px;
-    }
+.orca-screen {
+    animation: fadeIn 0.3s ease-out;
 }
 
-/* Scrollbar Styling */
-#orca-chat-messages::-webkit-scrollbar {
-    width: 6px;
+/* Smooth scrollbar */
+.orca-screen::-webkit-scrollbar {
+    width: 4px;
 }
 
-#orca-chat-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+.orca-screen::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-#orca-chat-messages::-webkit-scrollbar-thumb {
-    background: #D4A373;
-    border-radius: 3px;
+.orca-screen::-webkit-scrollbar-thumb {
+    background: rgba(212, 163, 115, 0.3);
+    border-radius: 2px;
 }
 
-#orca-chat-messages::-webkit-scrollbar-thumb:hover {
-    background: #c49363;
+.orca-screen::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 163, 115, 0.5);
 }
