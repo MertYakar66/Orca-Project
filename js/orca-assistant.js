@@ -435,17 +435,7 @@ Detaylı teklif alabilir miyim?`;
                         </button>
                     </div>
                     
-                    ${chatState.attachments.length > 0 ? `
-                        <div class="orca-attachments">
-                            📎 ${chatState.attachments.length} fotoğraf eklendi
-                        </div>
-                    ` : ''}
-                    
-                    ${chatState.voiceNote ? `
-                        <div class="orca-voice-note">
-                            🎤 "${chatState.voiceNote.substring(0, 50)}..."
-                        </div>
-                    ` : ''}
+                    ${renderAttachmentPreviews()}
                 </div>
                 
                 <div class="orca-nav-buttons">
@@ -774,11 +764,82 @@ Detaylı teklif alabilir miyim?`;
     }
 
     // ============================================
-    // VOICE RECORDING (MediaRecorder API - Audio Attachment)
+    // ATTACHMENT PREVIEW RENDERING
+    // ============================================
+    function renderAttachmentPreviews() {
+        if (chatState.attachments.length === 0 && !chatState.voiceNote) {
+            return '';
+        }
+
+        let html = '<div class="orca-attachments-preview">';
+
+        // Image previews
+        const images = chatState.attachments.filter(a => a.type === 'image');
+        if (images.length > 0) {
+            html += `<div class="orca-preview-section"><h4>📷 Fotoğraflar (${images.length})</h4><div class="orca-preview-grid">`;
+            images.forEach((img, idx) => {
+                const globalIdx = chatState.attachments.indexOf(img);
+                html += `
+                    <div class="orca-preview-item">
+                        <img src="${img.data}" alt="${img.filename}" class="orca-preview-thumb">
+                        <button onclick="window.orcaAssistant.removeAttachment(${globalIdx})" class="orca-remove-btn">×</button>
+                        <span class="orca-preview-name">${img.filename.substring(0, 15)}...</span>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+        }
+
+        // Audio previews
+        const audios = chatState.attachments.filter(a => a.type === 'audio');
+        if (audios.length > 0) {
+            audios.forEach((audio, idx) => {
+                const globalIdx = chatState.attachments.indexOf(audio);
+                html += `
+                    <div class="orca-preview-section">
+                        <h4>🎤 Sesli Not</h4>
+                        <div class="orca-audio-preview">
+                            <audio controls src="${audio.data}" class="orca-audio-player"></audio>
+                            <button onclick="window.orcaAssistant.removeAttachment(${globalIdx})" class="orca-remove-btn audio">× Sil</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Voice transcript (if available)
+        if (chatState.voiceNote && chatState.voiceNote !== 'Sesli not eklendi') {
+            html += `
+                <div class="orca-transcript">
+                    <strong>📝 Transkript:</strong>
+                    <p>"${chatState.voiceNote}"</p>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function removeAttachment(index) {
+        if (index >= 0 && index < chatState.attachments.length) {
+            const removed = chatState.attachments.splice(index, 1)[0];
+            // If it was an audio, also clear voice note transcript
+            if (removed.type === 'audio') {
+                chatState.voiceNote = null;
+            }
+            renderSpecsScreen();
+        }
+    }
+
+    // ============================================
+    // VOICE RECORDING (MediaRecorder + Web Speech API)
     // ============================================
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+    let speechRecognition = null;
+    let currentStream = null;
 
     async function startVoiceRecording() {
         // If already recording, stop it
@@ -789,9 +850,34 @@ Detaylı teklif alabilir miyim?`;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            currentStream = stream;
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             isRecording = true;
+
+            // Start Web Speech API for transcription (if available)
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                speechRecognition = new SpeechRecognition();
+                speechRecognition.lang = 'tr-TR';
+                speechRecognition.continuous = true;
+                speechRecognition.interimResults = false;
+
+                speechRecognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = 0; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript + ' ';
+                    }
+                    chatState.voiceNote = transcript.trim();
+                };
+
+                speechRecognition.onerror = (event) => {
+                    console.log('Speech recognition error:', event.error);
+                    // Continue even if transcription fails - we still have audio
+                };
+
+                speechRecognition.start();
+            }
 
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -810,11 +896,18 @@ Detaylı teklif alabilir miyim?`;
                         data: e.target.result,
                         filename: `sesli-not-${Date.now()}.webm`
                     });
-                    chatState.voiceNote = 'Sesli not eklendi';
+
+                    // If no transcript was captured, set a default
+                    if (!chatState.voiceNote) {
+                        chatState.voiceNote = 'Sesli not eklendi (transkript mevcut değil)';
+                    }
+
                     isRecording = false;
 
                     // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
+                    if (currentStream) {
+                        currentStream.getTracks().forEach(track => track.stop());
+                    }
 
                     renderSpecsScreen();
                 };
@@ -834,6 +927,17 @@ Detaylı teklif alabilir miyim?`;
     }
 
     function stopVoiceRecording() {
+        // Stop speech recognition
+        if (speechRecognition) {
+            try {
+                speechRecognition.stop();
+            } catch (e) {
+                console.log('Speech recognition already stopped');
+            }
+            speechRecognition = null;
+        }
+
+        // Stop media recorder
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
             isRecording = false;
@@ -999,6 +1103,7 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
             openWhatsAppDirect,
             triggerPhotoUpload,
             startVoiceRecording,
+            removeAttachment,
             submitOrder,
             reset
         };
