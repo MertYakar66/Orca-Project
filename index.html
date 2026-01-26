@@ -1806,36 +1806,7 @@
 
     <!-- AI CHAT WIDGET -->
     <div id="ai-widget-container" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-auto">
-        <div id="ai-chat-window"
-            class="hidden mb-4 w-[85vw] md:w-96 glass-panel bg-black/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right border border-brand-wood/30">
-            <div class="bg-white/5 p-4 border-b border-white/10 flex justify-between items-center">
-                <div class="flex items-center gap-2"><span class="text-lg animate-pulse">✨</span>
-                    <div>
-                        <div class="font-bold text-brand-wood text-xs tracking-widest">ORCA YAPAY ZEKA MÜHENDİSİ</div>
-                        <div class="text-[9px] text-gray-400">Claude AI Destekli</div>
-                    </div>
-                </div>
-                <button onclick="toggleChat()"
-                    class="text-white/50 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">✕</button>
-            </div>
-            <div id="chat-messages" class="h-80 overflow-y-auto p-4 space-y-4 text-xs font-light scrollbar-hide">
-                <div class="chat-bubble-ai p-3 rounded-2xl max-w-[85%]">Merhaba! Ben Orca'nın yapay zeka lojistik
-                    mühendisiyim.<br>Size nasıl yardımcı olabilirim?</div>
-            </div>
-            <div class="p-3 border-t border-white/10 bg-black/40">
-                <form onsubmit="handleChatSubmit(event)" class="flex gap-2 items-center">
-                    <label class="cursor-pointer text-white/50 hover:text-brand-wood transition p-2"><input type="file"
-                            id="image-upload" class="hidden" accept="image " onchange="handleImageSelect(event)"><i
-                            class="fa-solid fa-camera"></i></label>
-                    <button type="button" id="voice-toggle" class="text-white/50 hover:text-brand-wood transition p-2"
-                        onclick="toggleVoice()" title="Sesli Yanıt"><i class="fa-solid fa-microphone"></i></button>
-                    <input id="user-input" type="text" placeholder="Sorunuzu yazın..."
-                        class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-3 text-white text-xs focus:border-brand-wood outline-none">
-                    <button type="submit"
-                        class="bg-brand-wood text-black px-4 rounded-lg hover:bg-white transition flex items-center justify-center">➤</button>
-                </form>
-            </div>
-        </div>
+        <!-- Legacy chat window removed -->
         <button onclick="openAIChat()" id="chat-toggle-btn"
             class="group flex items-center gap-2 bg-brand-wood text-black px-5 py-4 rounded-full font-bold shadow-[0_0_20px_rgba(212,163,115,0.4)] hover:bg-white transition-all hover:scale-105 hover:shadow-brand-wood/60"><span
                 class="text-xl">✨</span><span class="text-xs tracking-widest group-hover:block hidden md:block">YAPAY
@@ -1954,42 +1925,8 @@
 
 
         // Section Fade-In Animation on Scroll
-        function setupScrollAnimations() {
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, observerOptions);
-
-            // Animate sections on scroll
-            document.querySelectorAll('section').forEach(section => {
-                section.style.opacity = '0';
-                section.style.transform = 'translateY(30px)';
-                section.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-                observer.observe(section);
-            });
-
-            // Make hero slider always visible
-            const heroSlider = document.getElementById('hero-slider');
-            if (heroSlider) {
-                heroSlider.style.opacity = '1';
-                heroSlider.style.transform = 'none';
-            }
-        }
-
-        // Initialize scroll animations after page load
-        window.addEventListener('load', () => {
-            setupScrollAnimations();
-        });
+        // setupScrollAnimations removed (duplicate)
+        // Main implementation is further down around line 2300
 
         function scrollCarousel(id, direction) { const c = document.getElementById(id); if (c) c.scrollBy({ left: c.clientWidth * direction, behavior: 'smooth' }); }
 

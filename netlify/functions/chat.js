@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { message, context: orderContext } = JSON.parse(event.body);
+    const { message, context: orderContext, type = 'validate' } = JSON.parse(event.body);
 
     if (!message) {
       return {
@@ -27,37 +27,52 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Smart validation prompt
-    const validationPrompt = `Sen ORCA Ahşap'ın sipariş asistanısın. Görevin müşterilere sipariş formunu doldurmada yardım etmek.
+    let prompt = '';
 
-Müşteri şu soruyu yanıtlıyor:
-"${orderContext?.question || 'Genel soru'}"
+    if (type === 'categorize') {
+      const categories = {
+        palet: 'Ahşap veya plastik taşıma paletleri',
+        kasa: 'Ahşap, kontrplak veya OSB sandık/kasa',
+        kereste: 'İnşaatlık veya doğramalık kereste',
+        kontrplak: 'Kontrplak levhalar',
+        lata: 'Ahşap veya kontrplak çıta/lata',
+        ikinciel: 'Kullanılmış veya ikinci el paletler'
+      };
 
-Müşterinin cevabı: "${message}"
+      prompt = `Sen bir lojistik uzmanısın. Müşterinin isteğini analiz edip en uygun ürün kategorisini belirle.
+        
+        KATEGORİLER:
+        ${JSON.stringify(categories, null, 2)}
 
-Beklenen format: ${orderContext?.expectedFormat || 'serbest'}
+        Müşteri isteği: "${message}"
 
-Şimdiye kadar toplanan bilgiler: ${JSON.stringify(orderContext?.currentData || {})}
+        Sadece şu JSON formatında yanıt ver, başka bir şey yazma:
+        { "category": "kategori_kodu", "confidence": 0-1 arası sayı, "reason": "kısa açıklama" }
+        
+        Eğer emin değilsen category: null döndür.`;
+    } else {
+      // Validation Prompt (Default)
+      prompt = `Sen ORCA Ahşap'ın sipariş asistanısın. Görevin müşterilere sipariş formunu doldurmada yardım etmek.
 
-GÖREVİN:
-1. Müşterinin cevabının soruya uygun olup olmadığını kontrol et
-2. Eksik veya hatalı ise, nazik bir şekilde düzelt ve somut örnek ver
-3. Doğruysa, kısa ve olumlu bir onay ver
+        Müşteri şu soruyu yanıtlıyor:
+        "${orderContext?.question || 'Genel soru'}"
 
-KURALLAR:
-- Sadece Türkçe yanıt ver
-- Maksimum 2-3 cümle (kısa ve öz)
-- Dostça ve profesyonel ol
-- Müşteriye yardımcı olduğunu hissettir
-- Rakam bekliyorsan rakam iste, şehir bekliyorsan şehir iste
-- Eğer müşteri "bilmiyorum" veya belirsiz bir cevap verdiyse, seçenekler sun
+        Müşterinin cevabı: "${message}"
 
-Örnek iyi yanıtlar:
-- "Teşekkürler! Miktar kaydedildi. Şimdi teslimat bilgilerine geçelim."
-- "Lütfen sadece rakam yazın. Örneğin: 100 (kaç adet istiyorsunuz?)"
-- "Şehir adını yazmanız gerekiyor. Örneğin: Bursa, İstanbul, Ankara"
+        Beklenen format: ${orderContext?.expectedFormat || 'serbest'}
 
-Yanıtını ver:`;
+        Şimdiye kadar toplanan bilgiler: ${JSON.stringify(orderContext?.currentData || {})}
+
+        GÖREVİN:
+        1. Müşterinin cevabının soruya uygun olup olmadığını kontrol et
+        2. Eksik veya hatalı ise, nazik bir şekilde düzelt ve somut örnek ver
+        3. Doğruysa, kısa ve olumlu bir onay ver
+
+        KURALLAR:
+        - Sadece Türkçe yanıt ver
+        - Maksimum 2-3 cümle (kısa ve öz)
+        - Dostça ve profesyonel ol`;
+    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
@@ -68,7 +83,7 @@ Yanıtını ver:`;
         },
         body: JSON.stringify({
           contents: [{
-            parts: [{ text: validationPrompt }]
+            parts: [{ text: prompt }]
           }],
           generationConfig: {
             temperature: 0.7,

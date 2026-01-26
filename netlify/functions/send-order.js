@@ -40,6 +40,13 @@ exports.handler = async (event, context) => {
       };
     }
 
+    if (!API_KEY) {
+      console.log('SendGrid API key not configured');
+      // ... error handling
+    } else {
+      console.log('Using SendGrid Key starting with:', API_KEY.substring(0, 6));
+    }
+
     sendgrid.setApiKey(API_KEY);
 
     // Parse request body
@@ -74,7 +81,10 @@ exports.handler = async (event, context) => {
     // Email to sales team (with attachments)
     const salesEmail = {
       to: 'orcaahsap@orcaahsap.com',
-      from: 'siparis@orcaahsap.com.tr',
+      from: {
+        email: 'mertyakar.my@gmail.com',
+        name: 'Orca Orman Ürünleri'
+      },
       replyTo: customerEmail,
       subject: `🔔 Yeni Sipariş Talebi: ${orderNumber} - ${companyName}`,
       text: orderDetails,
@@ -116,7 +126,10 @@ exports.handler = async (event, context) => {
     // Confirmation email to customer
     const customerConfirmEmail = {
       to: customerEmail,
-      from: 'siparis@orcaahsap.com.tr',
+      from: {
+        email: 'mertyakar.my@gmail.com',
+        name: 'Orca Orman Ürünleri'
+      },
       subject: `✅ Sipariş Talebiniz Alındı - ${orderNumber}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

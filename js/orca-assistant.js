@@ -285,9 +285,24 @@ Detaylı teklif alabilir miyim?`;
                     <span>3</span>
                 </div>
                 
-                <h2 class="text-lg font-bold text-white mb-4 text-center">
+                <h2 class="text-lg font-bold text-white mb-2 text-center">
                     Hangi ürün için yardım istiyorsunuz?
                 </h2>
+
+                <!-- Smart Search Input -->
+                <div class="mb-6 relative">
+                    <div class="flex gap-2">
+                        <input type="text" id="magic-search-input" 
+                               placeholder="Örn: İhracat için 100 tane palet lazım..." 
+                               class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-sm focus:border-brand-wood outline-none transition-colors"
+                               onkeypress="if(event.key === 'Enter') window.orcaAssistant.handleMagicSearch()">
+                        <button onclick="window.orcaAssistant.handleMagicSearch()" 
+                                class="bg-brand-wood text-black px-4 py-2 rounded-lg font-bold hover:bg-white transition-colors whitespace-nowrap">
+                            ✨ AI Sor
+                        </button>
+                    </div>
+                    <div id="magic-search-feedback" class="text-xs mt-2 text-gray-400 min-h-[20px]"></div>
+                </div>
                 
                 <div class="grid grid-cols-3 gap-3 mb-6">
                     ${categoryButtons}
@@ -945,6 +960,17 @@ Detaylı teklif alabilir miyim?`;
     let fullTranscript = '';
 
     async function startVoiceRecording() {
+        // 1. Browser Feature Detection
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Tarayıcınız ses kaydını desteklemiyor. Lütfen Chrome, Safari veya Firefox güncel sürümünü kullanın.');
+            return;
+        }
+
+        if (!window.MediaRecorder) {
+            alert('Tarayıcınızda ses kaydı desteği eksik (MediaRecorder). Yazarak devam edebilirsiniz.');
+            return;
+        }
+
         // If already recording, stop it
         if (chatState.isRecording && mediaRecorder) {
             stopVoiceRecording();
@@ -1238,6 +1264,131 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
     }
 
     // ============================================
+    // GESTURE HANDLING (Mobile Swipe)
+    // ============================================
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleTouchStart(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }
+
+    function handleTouchEnd(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }
+
+    function handleSwipe() {
+        const threshold = 50; // Min swipe distance
+        const swipeDistance = touchEndX - touchStartX;
+
+        if (Math.abs(swipeDistance) < threshold) return;
+
+        if (swipeDistance > 0) {
+            // Right Swipe (Go Back)
+            navigateFlow('back');
+        } else {
+            // Left Swipe (Go Next)
+            // Only allow next if we have a valid primary action button that isn't disabled
+            const nextBtn = document.querySelector('.orca-btn-primary');
+            if (nextBtn && !nextBtn.disabled && nextBtn.offsetParent !== null) {
+                // Determine next screen based on current state
+                navigateFlow('next');
+            }
+        }
+    }
+
+    async function handleMagicSearch() {
+        const input = document.getElementById('magic-search-input');
+        const feedback = document.getElementById('magic-search-feedback');
+
+        if (!input || !input.value.trim()) return;
+
+        const originalText = input.value;
+
+        // UI Loading State
+        input.disabled = true;
+        feedback.innerHTML = '<span class="animate-pulse">🤖 Düşünüyor...</span>';
+        feedback.className = 'text-xs mt-2 text-brand-wood min-h-[20px]';
+
+        try {
+            const response = await fetch(CONFIG.API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: originalText,
+                    type: 'categorize',
+                    context: {}
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.response) {
+                // Parse AI response (expecting specific JSON format from prompt)
+                // The AI might return markdown code blocks, so clean it
+                let cleanJson = data.response.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                try {
+                    const result = JSON.parse(cleanJson);
+
+                    if (result.category && CATEGORIES[result.category]) {
+                        feedback.textContent = `✅ Anlaşıldı: ${CATEGORIES[result.category].name}`;
+                        feedback.className = 'text-xs mt-2 text-green-400 min-h-[20px]';
+
+                        // Auto-select category after short delay
+                        setTimeout(() => {
+                            selectCategory(result.category);
+                            // Pre-fill notes with the original search text
+                            chatState.product.notes = originalText;
+                        }, 800);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('AI JSON parse error:', e);
+                }
+            }
+
+            feedback.textContent = 'Biraz daha detay verebilir misiniz? Veya aşağıdan seçebilirsiniz.';
+            feedback.className = 'text-xs mt-2 text-orange-400 min-h-[20px]';
+
+        } catch (error) {
+            console.error('Magic search error:', error);
+            feedback.textContent = 'Bağlantı hatası. Lütfen listeden seçin.';
+        } finally {
+            input.disabled = false;
+            input.focus();
+        }
+    }
+
+    function navigateFlow(direction) {
+        const screenOrder = ['welcome', 'product', 'specs', 'contact', 'confirm'];
+        const currentIdx = screenOrder.indexOf(chatState.currentScreen);
+
+        if (currentIdx === -1) return;
+
+        if (direction === 'back') {
+            if (currentIdx > 0) {
+                goToScreen(screenOrder[currentIdx - 1]);
+            }
+        } else if (direction === 'next') {
+            // SPECIAL CHECKS FOR VALIDATION BEFORE PROCEEDING
+            if (chatState.currentScreen === 'contact') {
+                validateAndProceedToConfirm();
+                return;
+            }
+
+            // Standard flow
+            if (currentIdx < screenOrder.length - 1) {
+                // Check if 'next' is actually allowed (e.g., category selected)
+                if (chatState.currentScreen === 'product' && !chatState.product.category) return;
+
+                goToScreen(screenOrder[currentIdx + 1]);
+            }
+        }
+    }
+
+    // ============================================
     // INITIALIZATION
     // ============================================
     function init() {
@@ -1248,6 +1399,10 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
             setTimeout(init, 500);
             return;
         }
+
+        // Add Touch Listeners for Swipe
+        elements.messagesContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+        elements.messagesContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
 
         // Override openAIChat to start our flow
         const originalOpenAIChat = window.openAIChat;
@@ -1267,6 +1422,7 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
             openWhatsAppDirect,
             triggerPhotoUpload,
             startVoiceRecording,
+            handleMagicSearch,
             removeAttachment,
             submitOrder,
             validateAndProceedToConfirm,
