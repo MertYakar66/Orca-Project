@@ -430,8 +430,9 @@ Detaylı teklif alabilir miyim?`;
                         <button onclick="window.orcaAssistant.triggerPhotoUpload()" class="orca-media-btn">
                             📷 Fotoğraf Ekle
                         </button>
-                        <button onclick="window.orcaAssistant.startVoiceRecording()" class="orca-media-btn">
-                            🎤 Sesli Not
+                        <button onclick="window.orcaAssistant.startVoiceRecording()" 
+                                class="orca-media-btn ${chatState.isRecording ? 'recording' : ''}">
+                            ${chatState.isRecording ? '🔴 Kaydediliyor... (Durdur)' : '🎤 Sesli Not'}
                         </button>
                     </div>
                     
@@ -939,33 +940,37 @@ Detaylı teklif alabilir miyim?`;
     // ============================================
     let mediaRecorder = null;
     let audioChunks = [];
-    let isRecording = false;
     let speechRecognition = null;
     let currentStream = null;
     let fullTranscript = '';
 
     async function startVoiceRecording() {
         // If already recording, stop it
-        if (isRecording && mediaRecorder) {
+        if (chatState.isRecording && mediaRecorder) {
             stopVoiceRecording();
             return;
         }
 
         try {
+            // 1. Get Audio Stream for MediaRecorder
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             currentStream = stream;
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
-            isRecording = true;
             fullTranscript = ''; // Reset transcript
 
-            // Start Web Speech API for transcription (if available)
+            // Update state
+            chatState.isRecording = true;
+            chatState.voiceNote = null; // Clear previous note
+            updateRecordingUI(true);
+
+            // 2. Start Web Speech API for transcription (Parallel)
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 speechRecognition = new SpeechRecognition();
                 speechRecognition.lang = 'tr-TR';
                 speechRecognition.continuous = true;
-                speechRecognition.interimResults = true; // Get real-time results
+                speechRecognition.interimResults = true;
 
                 speechRecognition.onresult = (event) => {
                     let interimTranscript = '';
@@ -980,38 +985,39 @@ Detaylı teklif alabilir miyim?`;
                         }
                     }
 
-                    // Accumulate final transcripts
                     if (finalTranscript) {
                         fullTranscript += finalTranscript;
                     }
 
-                    // Update state with accumulated + interim
-                    chatState.voiceNote = (fullTranscript + interimTranscript).trim();
+                    const currentText = (fullTranscript + interimTranscript).trim();
+                    if (currentText) {
+                        chatState.voiceNote = currentText;
+                        // Update UI seamlessly without breaking recording state
+                        updateTranscriptUI();
+                    }
                 };
 
                 speechRecognition.onerror = (event) => {
                     console.log('Speech recognition error:', event.error);
-                    // Don't stop - just log the error
                 };
 
-                // Auto-restart if recognition ends while still recording
+                // Auto-restart if it stops but we are still recording
                 speechRecognition.onend = () => {
-                    if (isRecording && speechRecognition) {
+                    if (chatState.isRecording && speechRecognition) {
                         try {
                             speechRecognition.start();
-                        } catch (e) {
-                            console.log('Could not restart speech recognition');
-                        }
+                        } catch (e) { /* ignore */ }
                     }
                 };
 
                 try {
                     speechRecognition.start();
                 } catch (e) {
-                    console.log('Speech recognition start error:', e);
+                    console.log('Speech recognition start failed', e);
                 }
             }
 
+            // 3. Handle Audio Data
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunks.push(event.data);
@@ -1030,16 +1036,21 @@ Detaylı teklif alabilir miyim?`;
                         filename: `sesli-not-${Date.now()}.webm`
                     });
 
-                    // Use accumulated transcript or set default
+                    // Final check on transcript
                     if (!chatState.voiceNote || chatState.voiceNote.trim() === '') {
-                        chatState.voiceNote = 'Sesli not kaydedildi';
+                        chatState.voiceNote = 'Sesli not kaydedildi (Transkript alınamadı)';
                     }
 
-                    isRecording = false;
+                    chatState.isRecording = false;
 
                     // Stop all tracks
                     if (currentStream) {
                         currentStream.getTracks().forEach(track => track.stop());
+                    }
+
+                    if (speechRecognition) {
+                        speechRecognition.onend = null; // Prevent restart
+                        speechRecognition.stop();
                     }
 
                     renderSpecsScreen();
@@ -1049,32 +1060,18 @@ Detaylı teklif alabilir miyim?`;
 
             mediaRecorder.start();
 
-            // Update UI to show recording state
-            updateRecordingUI(true);
-
         } catch (error) {
             console.error('Microphone access error:', error);
             alert('Mikrofon erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.');
-            isRecording = false;
+            chatState.isRecording = false;
+            updateRecordingUI(false);
         }
     }
 
     function stopVoiceRecording() {
-        // Stop speech recognition
-        if (speechRecognition) {
-            try {
-                speechRecognition.stop();
-            } catch (e) {
-                console.log('Speech recognition already stopped');
-            }
-            speechRecognition = null;
-        }
-
-        // Stop media recorder
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            isRecording = false;
-            updateRecordingUI(false);
+            // isRecording set to false in onstop handler
         }
     }
 
@@ -1088,6 +1085,34 @@ Detaylı teklif alabilir miyim?`;
                 btn.innerHTML = '🎤 Sesli Not';
                 btn.classList.remove('recording');
             }
+        }
+    }
+
+    // Helper to update just the transcript part of screen (if visible) or log it
+    function updateTranscriptUI() {
+        // If the transcript area exists, update it. If not, we might need to inject it.
+        // Since re-rendering the whole screen kills the recording button state, we avoid renderSpecsScreen()
+        // But the user wants to SEE what they are saying.
+        // We will inject/update a specific element for transcript preview.
+
+        let transcriptContainer = document.getElementById('active-transcript');
+        if (!transcriptContainer) {
+            // Find where to insert it - after buttons
+            const buttons = document.querySelector('.orca-media-buttons');
+            if (buttons) {
+                transcriptContainer = document.createElement('div');
+                transcriptContainer.id = 'active-transcript';
+                transcriptContainer.className = 'orca-transcript';
+                transcriptContainer.style.marginTop = '1rem';
+                buttons.parentNode.insertBefore(transcriptContainer, buttons.nextSibling);
+            }
+        }
+
+        if (transcriptContainer) {
+            transcriptContainer.innerHTML = `
+                <strong>🔴 Dinleniyor:</strong>
+                <p>"${chatState.voiceNote}"</p>
+            `;
         }
     }
 
