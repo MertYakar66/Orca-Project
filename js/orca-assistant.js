@@ -723,6 +723,11 @@ Detaylı teklif alabilir miyim?`;
 
     function updateSpec(field, value) {
         chatState.product[field] = value;
+
+        // Re-render if this field affects UI toggle buttons
+        if (field === 'usage') {
+            renderSpecsScreen();
+        }
     }
 
     function updateContact(field, value) {

@@ -73,7 +73,7 @@ exports.handler = async (event, context) => {
 
     // Email to sales team (with attachments)
     const salesEmail = {
-      to: 'orcaahsap@orcaahsap.com',
+      to: 'mertyakar.my@gmail.com',
       from: {
         email: 'mertyakar.my@gmail.com',
         name: 'Orca Orman Ürünleri'
