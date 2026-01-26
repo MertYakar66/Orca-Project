@@ -774,45 +774,84 @@ Detaylı teklif alabilir miyim?`;
     }
 
     // ============================================
-    // VOICE RECORDING (Web Speech API)
+    // VOICE RECORDING (MediaRecorder API - Audio Attachment)
     // ============================================
-    function startVoiceRecording() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
 
-        if (!SpeechRecognition) {
-            alert('Tarayıcınız sesli not özelliğini desteklemiyor. Lütfen yazarak belirtin.');
+    async function startVoiceRecording() {
+        // If already recording, stop it
+        if (isRecording && mediaRecorder) {
+            stopVoiceRecording();
             return;
         }
 
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'tr-TR';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            isRecording = true;
 
-        // Show recording indicator
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+                // Convert to base64 for email attachment
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    chatState.attachments.push({
+                        type: 'audio',
+                        data: e.target.result,
+                        filename: `sesli-not-${Date.now()}.webm`
+                    });
+                    chatState.voiceNote = 'Sesli not eklendi';
+                    isRecording = false;
+
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+
+                    renderSpecsScreen();
+                };
+                reader.readAsDataURL(audioBlob);
+            };
+
+            mediaRecorder.start();
+
+            // Update UI to show recording state
+            updateRecordingUI(true);
+
+        } catch (error) {
+            console.error('Microphone access error:', error);
+            alert('Mikrofon erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+            isRecording = false;
+        }
+    }
+
+    function stopVoiceRecording() {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            isRecording = false;
+            updateRecordingUI(false);
+        }
+    }
+
+    function updateRecordingUI(recording) {
         const btn = document.querySelector('.orca-media-btn:nth-child(2)');
         if (btn) {
-            btn.innerHTML = '🔴 Dinleniyor...';
-            btn.disabled = true;
+            if (recording) {
+                btn.innerHTML = '🔴 Kaydediliyor... (Durdurmak için tıkla)';
+                btn.classList.add('recording');
+            } else {
+                btn.innerHTML = '🎤 Sesli Not';
+                btn.classList.remove('recording');
+            }
         }
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            chatState.voiceNote = transcript;
-            renderSpecsScreen();
-        };
-
-        recognition.onerror = (event) => {
-            console.error('Voice recognition error:', event.error);
-            alert('Sesli not kaydedilemedi. Lütfen yazarak belirtin.');
-            renderSpecsScreen();
-        };
-
-        recognition.onend = () => {
-            renderSpecsScreen();
-        };
-
-        recognition.start();
     }
 
     // ============================================
