@@ -481,6 +481,8 @@ Detaylı teklif alabilir miyim?`;
                     İletişim Bilgileriniz
                 </h2>
                 
+                <div id="contact-errors"></div>
+                
                 <div class="orca-form">
                     <div class="orca-field">
                         <label>👤 Ad Soyad *</label>
@@ -540,7 +542,7 @@ Detaylı teklif alabilir miyim?`;
                     <button onclick="window.orcaAssistant.goToScreen('specs')" class="orca-btn-secondary">
                         ← Geri
                     </button>
-                    <button onclick="window.orcaAssistant.goToScreen('confirm')" class="orca-btn-primary">
+                    <button onclick="window.orcaAssistant.validateAndProceedToConfirm()" class="orca-btn-primary">
                         Önizleme →
                     </button>
                 </div>
@@ -709,6 +711,8 @@ Detaylı teklif alabilir miyim?`;
 
     function updateContact(field, value) {
         chatState.contact[field] = value;
+        // Save to localStorage for autofill
+        saveContactToStorage();
     }
 
     function setSizeType(type) {
@@ -728,6 +732,104 @@ Detaylı teklif alabilir miyim?`;
 
     function openWhatsAppDirect() {
         window.open(generateWhatsAppLink(), '_blank');
+    }
+
+    // ============================================
+    // LOCALSTORAGE AUTOFILL
+    // ============================================
+    function saveContactToStorage() {
+        try {
+            localStorage.setItem('orca_contact', JSON.stringify(chatState.contact));
+        } catch (e) {
+            console.log('Could not save to localStorage');
+        }
+    }
+
+    function loadContactFromStorage() {
+        try {
+            const saved = localStorage.getItem('orca_contact');
+            if (saved) {
+                const contact = JSON.parse(saved);
+                // Only load if we have valid data
+                if (contact && contact.name) {
+                    chatState.contact = { ...chatState.contact, ...contact };
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.log('Could not load from localStorage');
+        }
+        return false;
+    }
+
+    // ============================================
+    // INPUT VALIDATION
+    // ============================================
+    function validatePhone(phone) {
+        if (!phone) return false;
+        const cleaned = phone.replace(/\D/g, '');
+        return cleaned.length >= 10 && cleaned.length <= 11;
+    }
+
+    function validateEmail(email) {
+        if (!email) return false;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function validateContactForm() {
+        const errors = [];
+        if (!chatState.contact.name || chatState.contact.name.trim().length < 2) {
+            errors.push('Ad Soyad gerekli');
+        }
+        if (!chatState.contact.company || chatState.contact.company.trim().length < 2) {
+            errors.push('Firma adı gerekli');
+        }
+        if (!validatePhone(chatState.contact.phone)) {
+            errors.push('Geçerli telefon numarası girin');
+        }
+        if (!validateEmail(chatState.contact.email)) {
+            errors.push('Geçerli e-posta adresi girin');
+        }
+        if (!chatState.contact.city || chatState.contact.city.trim().length < 2) {
+            errors.push('Teslimat şehri gerekli');
+        }
+        return errors;
+    }
+
+    function validateAndProceedToConfirm() {
+        const errors = validateContactForm();
+        const errorContainer = document.getElementById('contact-errors');
+
+        if (errors.length > 0) {
+            if (errorContainer) {
+                errorContainer.innerHTML = `
+                    <div class="orca-error">
+                        ${errors.map(err => `<p>${err}</p>`).join('')}
+                    </div>
+                `;
+                // Scroll to errors
+                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                alert(errors.join('\n'));
+            }
+        } else {
+            if (errorContainer) errorContainer.innerHTML = '';
+            goToScreen('confirm');
+        }
+    }
+
+    // ============================================
+    // LOADING STATE
+    // ============================================
+    function showLoading(message = 'Gönderiliyor...') {
+        const loadingHtml = `
+            <div class="orca-loading">
+                <div class="orca-spinner"></div>
+                <p>${message}</p>
+            </div>
+        `;
+        elements.messagesContainer.innerHTML = loadingHtml;
     }
 
     // ============================================
@@ -840,6 +942,7 @@ Detaylı teklif alabilir miyim?`;
     let isRecording = false;
     let speechRecognition = null;
     let currentStream = null;
+    let fullTranscript = '';
 
     async function startVoiceRecording() {
         // If already recording, stop it
@@ -854,6 +957,7 @@ Detaylı teklif alabilir miyim?`;
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             isRecording = true;
+            fullTranscript = ''; // Reset transcript
 
             // Start Web Speech API for transcription (if available)
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -861,22 +965,51 @@ Detaylı teklif alabilir miyim?`;
                 speechRecognition = new SpeechRecognition();
                 speechRecognition.lang = 'tr-TR';
                 speechRecognition.continuous = true;
-                speechRecognition.interimResults = false;
+                speechRecognition.interimResults = true; // Get real-time results
 
                 speechRecognition.onresult = (event) => {
-                    let transcript = '';
-                    for (let i = 0; i < event.results.length; i++) {
-                        transcript += event.results[i][0].transcript + ' ';
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
                     }
-                    chatState.voiceNote = transcript.trim();
+
+                    // Accumulate final transcripts
+                    if (finalTranscript) {
+                        fullTranscript += finalTranscript;
+                    }
+
+                    // Update state with accumulated + interim
+                    chatState.voiceNote = (fullTranscript + interimTranscript).trim();
                 };
 
                 speechRecognition.onerror = (event) => {
                     console.log('Speech recognition error:', event.error);
-                    // Continue even if transcription fails - we still have audio
+                    // Don't stop - just log the error
                 };
 
-                speechRecognition.start();
+                // Auto-restart if recognition ends while still recording
+                speechRecognition.onend = () => {
+                    if (isRecording && speechRecognition) {
+                        try {
+                            speechRecognition.start();
+                        } catch (e) {
+                            console.log('Could not restart speech recognition');
+                        }
+                    }
+                };
+
+                try {
+                    speechRecognition.start();
+                } catch (e) {
+                    console.log('Speech recognition start error:', e);
+                }
             }
 
             mediaRecorder.ondataavailable = (event) => {
@@ -897,9 +1030,9 @@ Detaylı teklif alabilir miyim?`;
                         filename: `sesli-not-${Date.now()}.webm`
                     });
 
-                    // If no transcript was captured, set a default
-                    if (!chatState.voiceNote) {
-                        chatState.voiceNote = 'Sesli not eklendi (transkript mevcut değil)';
+                    // Use accumulated transcript or set default
+                    if (!chatState.voiceNote || chatState.voiceNote.trim() === '') {
+                        chatState.voiceNote = 'Sesli not kaydedildi';
                     }
 
                     isRecording = false;
@@ -964,6 +1097,11 @@ Detaylı teklif alabilir miyim?`;
     async function submitOrder(method) {
         chatState.submittedVia = method;
 
+        // Show loading state for email submission
+        if (method === 'email' || method === 'both') {
+            showLoading('Sipariş gönderiliyor...');
+        }
+
         // Prepare order data
         const orderData = {
             orderNumber: chatState.orderNumber,
@@ -984,6 +1122,7 @@ Detaylı teklif alabilir miyim?`;
                 await sendOrderEmail(orderData);
             } catch (error) {
                 console.error('Email error:', error);
+                // Still continue to success screen - show fallback contact info
             }
         }
 
@@ -1105,8 +1244,12 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
             startVoiceRecording,
             removeAttachment,
             submitOrder,
+            validateAndProceedToConfirm,
             reset
         };
+
+        // Try to load saved contact info
+        loadContactFromStorage();
 
         console.log('ORCA AI Assistant (Dual-Path) initialized');
     }

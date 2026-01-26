@@ -653,3 +653,57 @@
 .orca-screen::-webkit-scrollbar-thumb:hover {
     background: rgba(212, 163, 115, 0.5);
 }
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+.orca-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.orca-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(212, 163, 115, 0.2);
+    border-top-color: #D4A373;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.orca-loading p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+}
+
+/* ============================================
+   VALIDATION ERRORS
+   ============================================ */
+.orca-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.orca-error p {
+    color: #fca5a5;
+    font-size: 0.75rem;
+    margin: 0.25rem 0;
+}
+
+.orca-error p:before {
+    content: '⚠️ ';
+}
