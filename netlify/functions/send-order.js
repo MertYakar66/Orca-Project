@@ -74,7 +74,7 @@ exports.handler = async (event, context) => {
     // Email to sales team (with attachments)
     const salesEmail = {
       to: 'orcaahsap@orcaahsap.com',
-      from: 'siparis@orcaahsap.com.tr',
+      from: 'orcaahsap@orcaahsap.com', // Using the main company email as sender
       replyTo: customerEmail,
       subject: `🔔 Yeni Sipariş Talebi: ${orderNumber} - ${companyName}`,
       text: orderDetails,
@@ -116,7 +116,7 @@ exports.handler = async (event, context) => {
     // Confirmation email to customer
     const customerConfirmEmail = {
       to: customerEmail,
-      from: 'siparis@orcaahsap.com.tr',
+      from: 'orcaahsap@orcaahsap.com',
       subject: `✅ Sipariş Talebiniz Alındı - ${orderNumber}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
