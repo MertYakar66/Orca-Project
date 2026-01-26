@@ -40,13 +40,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (!API_KEY) {
-      console.log('SendGrid API key not configured');
-      // ... error handling
-    } else {
-      console.log('Using SendGrid Key starting with:', API_KEY.substring(0, 6));
-    }
-
     sendgrid.setApiKey(API_KEY);
 
     // Parse request body
