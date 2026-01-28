@@ -1,10 +1,62 @@
 const fetch = require('node-fetch');
 
+// Configuration
+const MAX_MESSAGE_LENGTH = 1000;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS_PER_WINDOW = 20; // Chat is more chatty than orders
+
+// In-memory rate limiting (per instance)
+const rateLimitMap = new Map();
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip) || { count: 0, startTime: now };
+
+  // Reset if window passed
+  if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+    record.count = 0;
+    record.startTime = now;
+  }
+
+  record.count++;
+  rateLimitMap.set(ip, record);
+
+  return record.count <= MAX_REQUESTS_PER_WINDOW;
+}
+
 exports.handler = async (event, context) => {
+  // CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
+    // Only allow POST
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method Not Allowed' })
+    };
+  }
+
+  // Rate Limiting
+  const clientIp = event.headers['client-ip'] || event.headers['x-forwarded-for'] || 'unknown';
+  if (clientIp !== 'unknown' && !checkRateLimit(clientIp)) {
+    console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+    return {
+      statusCode: 429,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        success: false,
+        error: 'Too many requests. Please try again later.'
+      })
     };
   }
 
@@ -12,18 +64,37 @@ exports.handler = async (event, context) => {
     const API_KEY = process.env.GEMINI_API_KEY;
 
     if (!API_KEY) {
+      console.error('Gemini API key not configured');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'API key not configured' })
+        body: JSON.stringify({ error: 'Server configuration error' })
       };
     }
 
-    const { message, context: orderContext, type = 'validate' } = JSON.parse(event.body);
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch (e) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid JSON' })
+      };
+    }
 
-    if (!message) {
+    const { message, context: orderContext, type = 'validate' } = body;
+
+    // --- Validation ---
+    if (!message || typeof message !== 'string') {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Message is required' })
+      };
+    }
+
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Message too long' })
       };
     }
 
@@ -40,15 +111,15 @@ exports.handler = async (event, context) => {
       };
 
       prompt = `Sen bir lojistik uzmanısın. Müşterinin isteğini analiz edip en uygun ürün kategorisini belirle.
-        
+
         KATEGORİLER:
         ${JSON.stringify(categories, null, 2)}
 
-        Müşteri isteği: "${message}"
+        Müşteri isteği: "${message.substring(0, 500)}"
 
         Sadece şu JSON formatında yanıt ver, başka bir şey yazma:
         { "category": "kategori_kodu", "confidence": 0-1 arası sayı, "reason": "kısa açıklama" }
-        
+
         Eğer emin değilsen category: null döndür.`;
     } else {
       // Validation Prompt (Default)

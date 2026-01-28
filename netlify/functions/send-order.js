@@ -1,5 +1,39 @@
 const sendgrid = require('@sendgrid/mail');
 
+// Configuration
+const MAX_ATTACHMENTS = 5;
+const MAX_TOTAL_SIZE_MB = 4.5; // Netlify has 6MB payload limit, keep safe
+const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+// In-memory rate limiting (per instance)
+const rateLimitMap = new Map();
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip) || { count: 0, startTime: now };
+
+  // Reset if window passed
+  if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+    record.count = 0;
+    record.startTime = now;
+  }
+
+  record.count++;
+  rateLimitMap.set(ip, record);
+
+  return record.count <= MAX_REQUESTS_PER_WINDOW;
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePhone(phone) {
+  return /^[\d\s\+\-\(\)]{10,20}$/.test(phone);
+}
+
 exports.handler = async (event, context) => {
   // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -22,11 +56,24 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Rate Limiting
+  const clientIp = event.headers['client-ip'] || event.headers['x-forwarded-for'] || 'unknown';
+  if (clientIp !== 'unknown' && !checkRateLimit(clientIp)) {
+    console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+    return {
+      statusCode: 429,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        success: false,
+        error: 'Too many requests. Please try again later.'
+      })
+    };
+  }
+
   try {
-    // Get API key from environment
     const API_KEY = process.env.SENDGRID_API_KEY;
     if (!API_KEY) {
-      console.log('SendGrid API key not configured');
+      console.error('SendGrid API key not configured');
       return {
         statusCode: 500,
         headers: {
@@ -35,14 +82,23 @@ exports.handler = async (event, context) => {
         },
         body: JSON.stringify({
           success: false,
-          error: 'SendGrid API key not configured'
+          error: 'Server configuration error'
         })
       };
     }
 
     sendgrid.setApiKey(API_KEY);
 
-    // Parse request body
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch (e) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid JSON payload' })
+      };
+    }
+
     const {
       orderNumber,
       customerName,
@@ -51,7 +107,49 @@ exports.handler = async (event, context) => {
       companyName,
       orderDetails,
       attachments = []
-    } = JSON.parse(event.body);
+    } = body;
+
+    // --- Validation ---
+    const errors = [];
+    if (!orderNumber) errors.push('Order number is required');
+    if (!customerEmail || !validateEmail(customerEmail)) errors.push('Valid email is required');
+    if (customerPhone && !validatePhone(customerPhone)) errors.push('Valid phone number is required');
+    if (!orderDetails) errors.push('Order details are required');
+
+    if (errors.length > 0) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ success: false, error: 'Validation failed', details: errors })
+      };
+    }
+
+    // --- Attachment Limits ---
+    if (attachments.length > MAX_ATTACHMENTS) {
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ success: false, error: `Too many attachments. Max ${MAX_ATTACHMENTS}.` })
+      };
+    }
+
+    // Calculate roughly size of attachments
+    // Base64 string length * 0.75 is roughly byte size
+    const totalSize = attachments.reduce((acc, att) => acc + (att.content ? att.content.length * 0.75 : 0), 0);
+
+    if (totalSize > MAX_TOTAL_SIZE_BYTES) {
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({
+          success: false,
+          error: `Attachments too large. Total limit is ${MAX_TOTAL_SIZE_MB}MB.`
+        })
+      };
+    }
 
     // Prepare email attachments (photos + audio)
     const emailAttachments = attachments.map(att => {
@@ -76,7 +174,7 @@ exports.handler = async (event, context) => {
       to: 'orcaahsap@orcaahsap.com',
       from: 'orcaahsap@orcaahsap.com', // Using the main company email as sender
       replyTo: customerEmail,
-      subject: `🔔 Yeni Sipariş Talebi: ${orderNumber} - ${companyName}`,
+      subject: `🔔 Yeni Sipariş Talebi: ${orderNumber} - ${companyName || 'Bireysel'}`,
       text: orderDetails,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -85,6 +183,12 @@ exports.handler = async (event, context) => {
             <p style="color: white; margin: 5px 0;">Yeni Sipariş Talebi</p>
           </div>
           <div style="background: #f5f5f5; padding: 20px;">
+            <p><strong>Sipariş No:</strong> ${orderNumber}</p>
+            <p><strong>Müşteri:</strong> ${customerName || 'İsimsiz'}</p>
+            <p><strong>Şirket:</strong> ${companyName || '-'}</p>
+            <p><strong>E-posta:</strong> ${customerEmail}</p>
+            <p><strong>Telefon:</strong> ${customerPhone || '-'}</p>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
             <pre style="background: white; padding: 20px; border-left: 4px solid #D4A373; font-family: monospace; white-space: pre-wrap; line-height: 1.6;">${orderDetails}</pre>
           </div>
           ${attachments.length > 0 ? `
@@ -105,7 +209,6 @@ exports.handler = async (event, context) => {
       `
     };
 
-    // Add attachments if any
     if (emailAttachments.length > 0) {
       salesEmail.attachments = emailAttachments;
     }
@@ -126,7 +229,7 @@ exports.handler = async (event, context) => {
           </div>
           
           <div style="background: white; padding: 30px;">
-            <p style="font-size: 16px; color: #333;">Sayın <strong>${customerName}</strong>,</p>
+            <p style="font-size: 16px; color: #333;">Sayın <strong>${customerName || 'Müşterimiz'}</strong>,</p>
             <p style="font-size: 14px; color: #666; line-height: 1.6;">
               ORCA Orman Ürünleri'ni tercih ettiğiniz için teşekkür ederiz. 
               Sipariş talebiniz satış ekibimize iletilmiştir.

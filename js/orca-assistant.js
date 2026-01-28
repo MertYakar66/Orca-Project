@@ -1175,10 +1175,18 @@ Detaylı teklif alabilir miyim?`;
         // Send email if requested
         if (method === 'email' || method === 'both') {
             try {
-                await sendOrderEmail(orderData);
+                const result = await sendOrderEmail(orderData);
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Sunucu hatası');
+                }
+
             } catch (error) {
                 console.error('Email error:', error);
-                // Still continue to success screen - show fallback contact info
+                alert('Sipariş gönderilirken bir hata oluştu: ' + error.message);
+                // Return to contact screen to let user retry or fix
+                renderContactScreen();
+                return;
             }
         }
 
