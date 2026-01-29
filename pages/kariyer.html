@@ -8,7 +8,8 @@
 
     <!-- Design System & Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../css/design-system.css">`n    <link rel="stylesheet" href="../css/chat-widget.css">
+    <link rel="stylesheet" href="../css/design-system.css">`n
+    <link rel="stylesheet" href="../css/chat-widget.css">
 
     <!-- Fonts -->
     <link
@@ -109,7 +110,7 @@
             <div class="text-center">
                 <img src="../assets/logo.png" alt="Orca Logo"
                     class="h-32 w-auto mx-auto mb-6 opacity-80 grayscale hover:grayscale-0 transition duration-500">
-                <p class="text-gray-500 text-sm">© 2025 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
+                <p class="text-gray-500 text-sm">© 2026 Orca Orman Ürünleri. Tüm hakları saklıdır.</p>
             </div>
         </div>
     </footer>
@@ -126,6 +127,61 @@
         });
         document.querySelectorAll('.fade-in-hidden').forEach(el => observer.observe(el));
     </script>
-    <!-- ORCA AI Order Assistant -->`n    <script src="../js/orca-assistant.js"></script>`n</body>
+    <!-- Yapay Zeka Chat Modal -->
+    <div id="ai-chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-modal-title"
+        class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-gradient-to-b from-gray-900 to-black border-2 border-[#D4A373]/30 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-[#D4A373]/20">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-[#D4A373] to-[#4A6741] rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-robot text-white text-xl" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <h3 id="chat-modal-title" class="text-white font-bold text-xl">Yapay Zeka Asistanı</h3>
+                        <p class="text-gray-400 text-sm">Orca Orman Ürünleri</p>
+                    </div>
+                </div>
+                <button
+                    onclick="document.getElementById('ai-chat-modal').classList.add('hidden'); document.getElementById('ai-chat-modal').classList.remove('flex');"
+                    class="text-gray-400 hover:text-white transition text-2xl" aria-label="Sohbeti kapat">
+                    <i class="fa-solid fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <!-- Chat Messages -->
+            <div id="chat-messages-new" class="flex-1 overflow-y-auto p-6 space-y-4" role="log" aria-live="polite"
+                aria-atomic="false"></div>
+            <!-- Input Area -->
+            <div class="p-4 border-t border-[#D4A373]/20">
+                <div class="flex gap-3">
+                    <input type="text" id="user-message-input" placeholder="Mesajınızı yazın..."
+                        class="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#D4A373] focus:ring-2 focus:ring-[#D4A373]/50 transition"
+                        onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <button onclick="sendMessage()"
+                        class="bg-[#D4A373] hover:bg-[#D4A373]/90 text-black font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Gönder
+                    </button>
+                </div>
+                <p class="text-gray-500 text-xs mt-2 text-center">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>
+                    Mesajlarınız güvenli bir şekilde işlenir • Google Gemini destekli
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- AI CHAT WIDGET BUTTON -->
+    <div id="ai-widget-container" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-auto">
+        <button onclick="window.openAIChat()" id="chat-toggle-btn"
+            class="group flex items-center gap-2 bg-[#D4A373] text-black px-5 py-4 rounded-full font-bold shadow-[0_0_20px_rgba(212,163,115,0.4)] hover:bg-white transition-all hover:scale-105 hover:shadow-[#D4A373]/60"><span
+                class="text-xl">✨</span><span class="text-xs tracking-widest group-hover:block hidden md:block">YAPAY
+                ZEKA MÜHENDİSİ</span></button>
+    </div>
+
+    <!-- ORCA AI Order Assistant -->`n
+    <script src="../js/orca-assistant.js"></script>`n
+</body>
 
 </html>

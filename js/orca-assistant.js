@@ -1441,6 +1441,17 @@ ${orderData.attachments.length > 0 ? `ðŸ“Ž ${orderData.attachments.length} fotoÄ
         const originalOpenAIChat = window.openAIChat;
         window.openAIChat = function () {
             if (originalOpenAIChat) originalOpenAIChat();
+
+            // Ensure modal is visible (for pages without inline script)
+            if (elements.modal) {
+                elements.modal.classList.remove('hidden');
+                elements.modal.classList.add('flex');
+
+                // Focus input if available
+                const input = document.getElementById('user-message-input');
+                if (input) input.focus();
+            }
+
             setTimeout(() => renderWelcomeScreen(), 100);
         };
 
