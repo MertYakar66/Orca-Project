@@ -2527,6 +2527,9 @@
 
     <!-- Yapay Zeka Chat Modal -->
     <div id="ai-chat-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chat-modal-title"
         class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div
             class="bg-gradient-to-b from-gray-900 to-black border-2 border-brand-wood/30 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
@@ -2536,20 +2539,20 @@
                 <div class="flex items-center gap-3">
                     <div
                         class="w-12 h-12 bg-gradient-to-br from-brand-wood to-brand-leaf rounded-full flex items-center justify-center">
-                        <i class="fa-solid fa-robot text-white text-xl"></i>
+                        <i class="fa-solid fa-robot text-white text-xl" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <h3 class="text-white font-bold text-xl">Yapay Zeka Asistanı</h3>
+                        <h3 id="chat-modal-title" class="text-white font-bold text-xl">Yapay Zeka Asistanı</h3>
                         <p class="text-gray-400 text-sm">Orca Orman Ürünleri</p>
                     </div>
                 </div>
-                <button onclick="closeAIChat()" class="text-gray-400 hover:text-white transition text-2xl">
-                    <i class="fa-solid fa-times"></i>
+                <button onclick="closeAIChat()" class="text-gray-400 hover:text-white transition text-2xl" aria-label="Sohbeti kapat">
+                    <i class="fa-solid fa-times" aria-hidden="true"></i>
                 </button>
             </div>
 
             <!-- Chat Messages -->
-            <div id="chat-messages-new" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div id="chat-messages-new" class="flex-1 overflow-y-auto p-6 space-y-4" role="log" aria-live="polite" aria-atomic="false">
                 <!-- Welcome Message -->
                 <div class="flex gap-3 items-start">
                     <div class="w-8 h-8 bg-brand-wood rounded-full flex items-center justify-center flex-shrink-0">
@@ -2626,7 +2629,7 @@
 
         // sendMessage is overridden by orca-assistant.js
         function sendMessage() {
-            console.log('sendMessage called - waiting for orca-assistant.js');
+            // Placeholder - overridden by orca-assistant.js
         }
     </script>
 

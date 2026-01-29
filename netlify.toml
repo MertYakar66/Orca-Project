@@ -1,0 +1,45 @@
+# Netlify Configuration for ORCA B2B Website
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Security Headers for all pages
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+    # Prevent MIME type sniffing
+    X-Content-Type-Options = "nosniff"
+    # Control referrer information
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Permissions Policy (formerly Feature-Policy)
+    Permissions-Policy = "camera=(), microphone=(self), geolocation=()"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# Function-specific settings
+[functions]
+  # Node.js version for serverless functions
+  node_bundler = "esbuild"
+
+# Redirects (if needed)
+# [[redirects]]
+#   from = "/old-path"
+#   to = "/new-path"
+#   status = 301

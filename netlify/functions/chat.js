@@ -4,9 +4,18 @@ const fetch = require('node-fetch');
 const MAX_MESSAGE_LENGTH = 1000;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_REQUESTS_PER_WINDOW = 20; // Chat is more chatty than orders
+const ALLOWED_ORIGINS = ['https://orcaahsap.com.tr', 'https://www.orcaahsap.com.tr'];
 
 // In-memory rate limiting (per instance)
 const rateLimitMap = new Map();
+
+// Get CORS origin - restrict in production
+function getCorsOrigin(requestOrigin) {
+  if (process.env.NODE_ENV === 'development' || !requestOrigin) {
+    return '*'; // Allow all in development
+  }
+  return ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : ALLOWED_ORIGINS[0];
+}
 
 function checkRateLimit(ip) {
   const now = Date.now();
@@ -25,12 +34,15 @@ function checkRateLimit(ip) {
 }
 
 exports.handler = async (event, context) => {
+  const origin = event.headers.origin || event.headers.Origin || '';
+  const corsOrigin = getCorsOrigin(origin);
+
   // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
@@ -42,6 +54,7 @@ exports.handler = async (event, context) => {
     // Only allow POST
     return {
       statusCode: 405,
+      headers: { 'Access-Control-Allow-Origin': corsOrigin },
       body: JSON.stringify({ error: 'Method Not Allowed' })
     };
   }
@@ -52,7 +65,7 @@ exports.handler = async (event, context) => {
     console.warn(`Rate limit exceeded for IP: ${clientIp}`);
     return {
       statusCode: 429,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': corsOrigin },
       body: JSON.stringify({
         success: false,
         error: 'Too many requests. Please try again later.'
@@ -67,6 +80,7 @@ exports.handler = async (event, context) => {
       console.error('Gemini API key not configured');
       return {
         statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': corsOrigin },
         body: JSON.stringify({ error: 'Server configuration error' })
       };
     }
@@ -77,6 +91,7 @@ exports.handler = async (event, context) => {
     } catch (e) {
       return {
         statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': corsOrigin },
         body: JSON.stringify({ error: 'Invalid JSON' })
       };
     }
@@ -87,6 +102,7 @@ exports.handler = async (event, context) => {
     if (!message || typeof message !== 'string') {
       return {
         statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': corsOrigin },
         body: JSON.stringify({ error: 'Message is required' })
       };
     }
@@ -94,6 +110,7 @@ exports.handler = async (event, context) => {
     if (message.length > MAX_MESSAGE_LENGTH) {
       return {
         statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': corsOrigin },
         body: JSON.stringify({ error: 'Message too long' })
       };
     }
@@ -172,9 +189,9 @@ exports.handler = async (event, context) => {
       console.error('Gemini API error:', data);
       return {
         statusCode: response.status,
+        headers: { 'Access-Control-Allow-Origin': corsOrigin },
         body: JSON.stringify({
-          error: 'AI service error',
-          details: data.error?.message || 'Unknown error'
+          error: 'AI service temporarily unavailable. Please try again.'
         })
       };
     }
@@ -184,7 +201,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
       },
@@ -196,18 +213,19 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
+    // Log detailed error server-side for debugging
     console.error('Function error:', error);
 
+    // Return generic error message to client (don't expose internal details)
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         success: false,
-        error: 'Internal server error',
-        message: error.message
+        error: 'An error occurred. Please try again.'
       })
     };
   }
