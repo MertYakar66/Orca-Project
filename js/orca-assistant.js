@@ -573,37 +573,56 @@ Detaylı teklif alabilir miyim?`;
         hideInputArea();
 
         const cat = CATEGORIES[chatState.product.category];
-        const orderNumber = generateOrderNumber();
-        chatState.orderNumber = orderNumber;
+        // Fix: Only generate order number once to prevent duplicates on re-render
+        if (!chatState.orderNumber) {
+            chatState.orderNumber = generateOrderNumber();
+        }
+        const orderNumber = chatState.orderNumber;
+
+        // Escape all user-provided content to prevent XSS
+        const safeProduct = {
+            subcategory: escapeHtml(chatState.product.subcategory || ''),
+            category: escapeHtml(chatState.product.category || ''),
+            quantity: escapeHtml(chatState.product.quantity || ''),
+            dimensions: escapeHtml(chatState.product.dimensions || ''),
+            notes: escapeHtml(chatState.product.notes || '')
+        };
+        const safeContact = {
+            name: escapeHtml(chatState.contact.name || ''),
+            company: escapeHtml(chatState.contact.company || ''),
+            phone: escapeHtml(chatState.contact.phone || ''),
+            email: escapeHtml(chatState.contact.email || ''),
+            city: escapeHtml(chatState.contact.city || '')
+        };
 
         elements.messagesContainer.innerHTML = `
             <div class="orca-screen confirm-screen">
                 <h2 class="text-lg font-bold text-white mb-4 text-center">
                     ✅ Talebiniz Hazır
                 </h2>
-                
+
                 <div class="orca-summary">
                     <div class="orca-summary-section">
                         <h3>📦 Ürün</h3>
-                        <p>${cat?.icon || ''} ${chatState.product.subcategory || chatState.product.category || '-'}</p>
-                        <p>Miktar: ${chatState.product.quantity || '-'} adet</p>
-                        <p>Boyut: ${chatState.product.dimensions || 'Belirtilmedi'}</p>
+                        <p>${cat?.icon || ''} ${safeProduct.subcategory || safeProduct.category || '-'}</p>
+                        <p>Miktar: ${safeProduct.quantity || '-'} adet</p>
+                        <p>Boyut: ${safeProduct.dimensions || 'Belirtilmedi'}</p>
                         ${chatState.product.usage ? `<p>${chatState.product.usage === 'export' ? '🌍 İhracat (ISPM-15)' : '🏠 Yurtiçi'}</p>` : ''}
                     </div>
-                    
+
                     <div class="orca-summary-section">
                         <h3>👤 İletişim</h3>
-                        <p>${chatState.contact.name || '-'}</p>
-                        <p>🏢 ${chatState.contact.company || '-'}</p>
-                        <p>📱 ${chatState.contact.phone || '-'}</p>
-                        <p>📧 ${chatState.contact.email || '-'}</p>
-                        <p>🚚 ${chatState.contact.city || '-'}</p>
+                        <p>${safeContact.name || '-'}</p>
+                        <p>🏢 ${safeContact.company || '-'}</p>
+                        <p>📱 ${safeContact.phone || '-'}</p>
+                        <p>📧 ${safeContact.email || '-'}</p>
+                        <p>🚚 ${safeContact.city || '-'}</p>
                     </div>
-                    
+
                     ${chatState.product.notes ? `
                         <div class="orca-summary-section">
                             <h3>💬 Notlar</h3>
-                            <p>${chatState.product.notes}</p>
+                            <p>${safeProduct.notes}</p>
                         </div>
                     ` : ''}
                     
@@ -896,17 +915,18 @@ Detaylı teklif alabilir miyim?`;
 
         let html = '<div class="orca-attachments-preview">';
 
-        // Image previews
+        // Image previews - escape filenames to prevent XSS
         const images = chatState.attachments.filter(a => a.type === 'image');
         if (images.length > 0) {
             html += `<div class="orca-preview-section"><h4>📷 Fotoğraflar (${images.length})</h4><div class="orca-preview-grid">`;
             images.forEach((img, idx) => {
                 const globalIdx = chatState.attachments.indexOf(img);
+                const safeFilename = escapeHtml(img.filename || 'image');
                 html += `
                     <div class="orca-preview-item">
-                        <img src="${img.data}" alt="${img.filename}" class="orca-preview-thumb">
+                        <img src="${img.data}" alt="${safeFilename}" class="orca-preview-thumb">
                         <button onclick="window.orcaAssistant.removeAttachment(${globalIdx})" class="orca-remove-btn">×</button>
-                        <span class="orca-preview-name">${img.filename.substring(0, 15)}...</span>
+                        <span class="orca-preview-name">${safeFilename.substring(0, 15)}...</span>
                     </div>
                 `;
             });
@@ -930,12 +950,12 @@ Detaylı teklif alabilir miyim?`;
             });
         }
 
-        // Voice transcript (if available)
+        // Voice transcript (if available) - escape to prevent XSS
         if (chatState.voiceNote && chatState.voiceNote !== 'Sesli not eklendi') {
             html += `
                 <div class="orca-transcript">
                     <strong>📝 Transkript:</strong>
-                    <p>"${chatState.voiceNote}"</p>
+                    <p>"${escapeHtml(chatState.voiceNote)}"</p>
                 </div>
             `;
         }
@@ -1029,7 +1049,7 @@ Detaylı teklif alabilir miyim?`;
                 };
 
                 speechRecognition.onerror = (event) => {
-                    console.log('Speech recognition error:', event.error);
+                    // Silent handling - speech recognition may not be available on all browsers
                 };
 
                 // Auto-restart if it stops but we are still recording
@@ -1044,7 +1064,7 @@ Detaylı teklif alabilir miyim?`;
                 try {
                     speechRecognition.start();
                 } catch (e) {
-                    console.log('Speech recognition start failed', e);
+                    // Silent handling - speech recognition may not be available
                 }
             }
 
@@ -1142,7 +1162,7 @@ Detaylı teklif alabilir miyim?`;
         if (transcriptContainer) {
             transcriptContainer.innerHTML = `
                 <strong>🔴 Dinleniyor:</strong>
-                <p>"${chatState.voiceNote}"</p>
+                <p>"${escapeHtml(chatState.voiceNote || '')}"</p>
             `;
         }
     }
@@ -1444,8 +1464,6 @@ ${orderData.attachments.length > 0 ? `📎 ${orderData.attachments.length} foto�
 
         // Try to load saved contact info
         loadContactFromStorage();
-
-        console.log('ORCA AI Assistant (Dual-Path) initialized');
     }
 
     // Wait for DOM
