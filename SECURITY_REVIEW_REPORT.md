@@ -1,15 +1,15 @@
 # ORCA B2B Website - Comprehensive Security & Code Quality Review
 
-**Date:** 2026-01-28
+**Date:** 2026-01-29 (Updated)
 **Reviewer:** Claude Code (Automated Security Audit)
 **Repository:** MertYakar66/Orca-Project
-**Overall Health Score:** 7/10
+**Overall Health Score:** 6.5/10
 
 ---
 
 ## Executive Summary
 
-The ORCA B2B website is a well-structured Turkish wood products ordering system with AI-powered chatbot functionality. The codebase demonstrates good practices in several areas (API keys in environment variables, rate limiting attempts, input validation), but has room for improvement in XSS prevention, production logging, and serverless-specific security patterns.
+The ORCA B2B website is a well-structured Turkish wood products ordering system with AI-powered chatbot functionality. The codebase demonstrates good practices in several areas (API keys in environment variables, input validation), but has **critical XSS vulnerabilities** where user input is rendered via `innerHTML` without sanitization, despite an `escapeHtml()` helper being defined but never used. The open serverless endpoints with permissive CORS also present spam/abuse risks.
 
 ---
 
@@ -17,86 +17,125 @@ The ORCA B2B website is a well-structured Turkish wood products ordering system 
 
 ### 🔴 HIGH Priority
 
-#### 1.1 Unused API Key Variable in Client Code
-**File:** `index.html:2291`
-**Issue:** Empty `apiKey` variable in client-side JavaScript
-```javascript
-const apiKey = "";
-```
-**Risk:** This appears to be remnant code that previously held an API key. Even though empty now, it indicates potential past exposure.
-**Fix:** Remove this unused variable entirely.
+#### 1.1 DOM XSS via Unescaped User Input in Chat UI (CRITICAL)
+**File:** `js/orca-assistant.js:579-646` (`renderConfirmScreen()`)
+**Issue:** User-provided fields are inserted into HTML templates via `innerHTML` without escaping. This includes contact details, product notes, and voice transcript.
 
----
-
-#### 1.2 Potential XSS in Image Modal (urunler.html)
-**File:** `urunler.html:1787-1800`
-**Issue:** Direct interpolation of `imageSrc` and `title` into innerHTML without sanitization
 ```javascript
-function openImageModal(imageSrc, title) {
-    modal.innerHTML = `
-        <img src="${imageSrc}" alt="${title}" class="w-full h-auto rounded-lg">
-        <div class="text-center mt-4 text-white text-xl font-bold">${title}</div>
-    `;
-}
+// Lines 596-606 - User input directly interpolated into innerHTML
+elements.messagesContainer.innerHTML = `
+    ...
+    <p>${chatState.contact.name || '-'}</p>
+    <p>🏢 ${chatState.contact.company || '-'}</p>
+    <p>📱 ${chatState.contact.phone || '-'}</p>
+    <p>📧 ${chatState.contact.email || '-'}</p>
+    <p>🚚 ${chatState.contact.city || '-'}</p>
+    ...
+    <p>${chatState.product.notes}</p>  // Line 606 - User notes unescaped
+`;
 ```
-**Risk:** If image paths or titles come from user-controlled sources, attackers could inject malicious HTML/JS.
-**Fix:** Use the `escapeHtml()` function for the title, and validate imageSrc is a proper URL:
+
+**Risk:** If an attacker enters `<img onerror=alert(1)>` or similar in any field, it executes in the chat modal context. This is a stored XSS that could steal session data or perform actions on behalf of users.
+
+**Evidence:** An `escapeHtml()` helper exists at lines 126-130 but is **never called anywhere in the codebase**.
+
+**Fix:** Wrap all user content with `escapeHtml()` before template injection:
 ```javascript
-// Already defined in orca-assistant.js:126-130, move to shared utility
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+<p>${escapeHtml(chatState.contact.name) || '-'}</p>
+<p>${escapeHtml(chatState.product.notes)}</p>
 ```
 
 ---
 
-#### 1.3 Dangerous Force Push Script
-**File:** `push.sh:4`
-```bash
-git push origin main --force
+#### 1.2 Public Endpoints with Permissive CORS (Spam/Abuse Risk)
+**Files:** `netlify/functions/chat.js:33`, `netlify/functions/send-order.js:43`
+**Issue:** Both Netlify functions allow `Access-Control-Allow-Origin: *` and have no authentication. Rate limiting is in-memory only and resets per function instance.
+
+```javascript
+'Access-Control-Allow-Origin': '*'  // Any origin can call
+const rateLimitMap = new Map();     // Resets on cold start!
 ```
-**Risk:** Force pushing can overwrite remote history and destroy team members' work.
-**Fix:** Remove `--force` flag or add confirmation prompt.
+
+**Risk:** Any website can call these endpoints, enabling:
+- Email spam via SendGrid (costs money, damages sender reputation)
+- AI API abuse via Gemini (costs money)
+- DoS via repeated requests
+
+**Fix:**
+1. Restrict CORS to your domain: `'Access-Control-Allow-Origin': 'https://orcaahsap.com.tr'`
+2. Use Netlify edge middleware or Upstash Redis for persistent rate limiting
+3. Add CAPTCHA or signed tokens for abuse prevention
 
 ---
 
-#### 1.4 Local Path Exposure in push.sh
-**File:** `push.sh:2`
-```bash
-cd /Users/mertyakar/Desktop/Orca
+#### 1.3 Email Template HTML Injection
+**File:** `netlify/functions/send-order.js:179-209`
+**Issue:** `orderDetails`, `customerName`, `companyName`, and other user-controlled fields are interpolated into HTML emails without sanitization.
+
+```javascript
+// Line 187-192 - User input in HTML email
+html: `
+    <p><strong>Müşteri:</strong> ${customerName || 'İsimsiz'}</p>
+    <p><strong>Şirket:</strong> ${companyName || '-'}</p>
+    ...
+    <pre style="...">${orderDetails}</pre>  // User notes injected raw
+`
 ```
-**Risk:** Exposes local development environment paths. While not directly exploitable, it's information leakage.
-**Fix:** Use relative paths or remove this file from version control.
+
+**Risk:** Attackers can inject malicious HTML or phishing links into emails sent to your team and customers.
+
+**Fix:** Escape HTML before inserting into email templates, or send plaintext-only for user-supplied fields:
+```javascript
+const escapeHtml = (str) => str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+```
 
 ---
 
 ### 🟠 MEDIUM Priority
 
-#### 2.1 Ineffective Rate Limiting (Serverless)
-**Files:** `netlify/functions/chat.js:8-27`, `netlify/functions/send-order.js:10-27`
-**Issue:** Rate limiting uses in-memory `Map()` which resets on every function cold start.
+#### 2.1 Server-Side Attachment Validation Missing
+**File:** `netlify/functions/send-order.js:130-170`
+**Issue:** Photo/audio validation is done only client-side. Server trusts incoming attachments and doesn't validate MIME types or base64 correctness.
+
 ```javascript
-const rateLimitMap = new Map(); // Resets on cold start!
+// Server only checks count and aggregate size
+if (attachments.length > MAX_ATTACHMENTS) { ... }
+const totalSize = attachments.reduce(...);  // Size check only
+
+// Then blindly assumes type is correct
+if (att.type === 'image') {
+    mimeType = 'image/jpeg';  // Trusts client-provided type
+}
 ```
-**Risk:** Rate limiting is ineffective in serverless environments where instances are ephemeral.
-**Fix:** Implement persistent rate limiting using:
-- Netlify's built-in rate limiting
-- Redis/Upstash for persistent counters
-- Cloudflare rate limiting
+
+**Risk:** Attackers can bypass client validation and send malicious file types.
+
+**Fix:**
+- Validate base64 content is actually valid
+- Check magic bytes match claimed MIME type
+- Reject non-image/audio types server-side
 
 ---
 
-#### 2.2 Overly Permissive CORS
-**Files:** `netlify/functions/chat.js:33`, `netlify/functions/send-order.js:43`
+#### 2.2 Order Number Regeneration Bug
+**File:** `js/orca-assistant.js:576`
+**Issue:** `generateOrderNumber()` runs each time `renderConfirmScreen()` is called. If users navigate back and return, the order number changes.
+
 ```javascript
-'Access-Control-Allow-Origin': '*'
+function renderConfirmScreen() {
+    ...
+    const orderNumber = generateOrderNumber();  // Called every render!
+    chatState.orderNumber = orderNumber;
 ```
-**Risk:** Allows any website to call your APIs. While acceptable for public APIs, it enables CSRF-like attacks.
-**Fix:** Restrict to your domain:
+
+**Risk:** Confuses users and creates duplicate/changing order numbers in the system.
+
+**Fix:** Generate order number once when entering confirm screen for the first time:
 ```javascript
-'Access-Control-Allow-Origin': 'https://orcaahsap.com.tr'
+if (!chatState.orderNumber) {
+    chatState.orderNumber = generateOrderNumber();
+}
+const orderNumber = chatState.orderNumber;
 ```
 
 ---
@@ -109,48 +148,54 @@ body: JSON.stringify({
     error: error.message  // Exposes internal error details
 })
 ```
-**Risk:** Internal error messages can reveal system information to attackers.
-**Fix:** Return generic error messages to clients, log detailed errors server-side:
-```javascript
-body: JSON.stringify({
-    success: false,
-    error: 'An error occurred processing your request'
-})
-// Keep: console.error('SendGrid Error:', error);
-```
+**Fix:** Return generic error messages to clients.
 
 ---
 
 #### 2.4 Missing Content Security Policy
 **Files:** All HTML files
-**Issue:** No CSP headers or meta tags to prevent XSS attacks.
-**Fix:** Add to HTML head or Netlify headers:
-```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
-```
-
----
-
-#### 2.5 CDN Scripts Without Subresource Integrity
-**File:** `index.html:11-18`
-```html
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-```
-**Risk:** If CDN is compromised, malicious code could be served.
-**Fix:** Add SRI hashes:
-```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-        integrity="sha384-..."
-        crossorigin="anonymous"></script>
-```
+**Issue:** No CSP headers to prevent XSS attacks.
+**Fix:** Add CSP meta tag or Netlify headers.
 
 ---
 
 ### 🟢 LOW Priority
 
-#### 3.1 Console Statements in Production
+#### 3.1 PII Stored in localStorage Without Consent
+**File:** `js/orca-assistant.js:761-784`
+**Issue:** Contact data is persisted automatically without explicit user consent.
+
+```javascript
+function saveContactToStorage() {
+    localStorage.setItem('orca_contact', JSON.stringify(chatState.contact));
+}
+```
+
+**Risk:** Privacy concern on shared devices; potential GDPR implications.
+
+**Fix:**
+- Add "Remember my info" checkbox
+- Only store if user opts in
+- Provide "Clear saved info" option
+
+---
+
+#### 3.2 Unused escapeHtml Helper (Code Smell)
+**File:** `js/orca-assistant.js:126-130`
+**Issue:** Security helper is defined but **never used** - indicates missed sanitization.
+
+```javascript
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+// ^ Defined but grep shows 0 calls in entire codebase
+```
+
+---
+
+#### 3.3 Console Statements in Production
 **Files:** Multiple locations
 
 | File | Line | Statement |
@@ -158,174 +203,112 @@ body: JSON.stringify({
 | `js/orca-assistant.js` | 765 | `console.log('Could not save to localStorage')` |
 | `js/orca-assistant.js` | 781 | `console.log('Could not load from localStorage')` |
 | `js/orca-assistant.js` | 1032 | `console.log('Speech recognition error:', event.error)` |
-| `js/orca-assistant.js` | 1448 | `console.log('ORCA AI Assistant (Dual-Path) initialized')` |
-| `urunler.html` | 571 | `console.log('Kontrplak palet button clicked')` |
-| `urunler.html` | 618 | `console.log('Ahşap palet button clicked')` |
-| `urunler.html` | 652 | `console.log('2. El palet button clicked')` |
-| `index.html` | 2629 | `console.log('sendMessage called - waiting for orca-assistant.js')` |
-
-**Fix:** Remove debug console.log statements or use a proper logging library with log levels.
+| `js/orca-assistant.js` | 1448 | `console.log('ORCA AI Assistant initialized')` |
+| `urunler.html` | 571, 618, 652 | Debug click logs |
+| `index.html` | 2629 | `console.log('sendMessage called')` |
 
 ---
 
-#### 3.2 Missing Environment Variable Template
-**Issue:** No `.env.example` file exists for team onboarding.
-**Fix:** Create `.env.example`:
-```env
-# ORCA Website Environment Variables
-SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxx
-GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxx
-```
+#### 3.4 CDN Scripts Without Subresource Integrity
+**File:** `index.html:11-18`
+**Risk:** If CDN is compromised, malicious code could be served.
+**Fix:** Add SRI hashes to CDN scripts.
 
 ---
 
-#### 3.3 Missing netlify.toml Configuration
-**Issue:** No `netlify.toml` file for deployment configuration.
-**Fix:** Create `netlify.toml`:
-```toml
-[build]
-  publish = "."
-  functions = "netlify/functions"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-```
+#### 3.5 Missing Configuration Files
+| File | Purpose | Priority |
+|------|---------|----------|
+| `.env.example` | Environment variable template | HIGH |
+| `netlify.toml` | Netlify config + security headers | MEDIUM |
 
 ---
 
-## 2. API INTEGRATION REVIEW
+## 2. EXPOSED SECRETS (CRITICAL LIST)
 
-### SendGrid Integration (netlify/functions/send-order.js)
-| Aspect | Status | Notes |
-|--------|--------|-------|
-| API Key in env vars | ✅ Good | `process.env.SENDGRID_API_KEY` |
-| Input validation | ✅ Good | Email and phone validation present |
-| Attachment limits | ✅ Good | 5 attachments, 4.5MB max |
-| Error handling | ⚠️ Partial | Leaks error.message to client |
-| Rate limiting | ⚠️ Partial | In-memory only, resets on cold start |
+### ✅ No secrets or API keys were found hardcoded in the repo.
 
-### Gemini AI Integration (netlify/functions/chat.js)
+Both SendGrid and Gemini keys are read from environment variables only:
+- `process.env.SENDGRID_API_KEY` (send-order.js:76)
+- `process.env.GEMINI_API_KEY` (chat.js:64)
+
+The `.gitignore` properly excludes `.env` files.
+
+---
+
+## 3. API INTEGRATION REVIEW
+
+### Gemini (chat.js)
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | API Key in env vars | ✅ Good | `process.env.GEMINI_API_KEY` |
 | Message length limit | ✅ Good | MAX_MESSAGE_LENGTH = 1000 |
-| Prompt injection protection | ⚠️ Partial | User input is quoted but not escaped |
+| Rate limiting | ⚠️ Weak | In-memory only, resets on cold start |
 | Error handling | ✅ Good | Generic errors returned |
-| Rate limiting | ⚠️ Partial | In-memory only |
+| Timeout/retry | ❌ Missing | No AbortController or retry logic |
+
+### SendGrid (send-order.js)
+| Aspect | Status | Notes |
+|--------|--------|-------|
+| API Key in env vars | ✅ Good | `process.env.SENDGRID_API_KEY` |
+| Input validation | ✅ Good | Email/phone validation present |
+| Attachment limits | ⚠️ Partial | Size checked, but MIME not validated server-side |
+| Error handling | ⚠️ Leaky | Returns `error.message` to client |
+| HTML sanitization | ❌ Missing | User content injected raw into HTML emails |
 
 ---
 
-## 3. CHATBOT FUNCTIONALITY REVIEW
+## 4. CHATBOT FUNCTIONALITY REVIEW
 
-### Data Flow Analysis
+### Data Flow
 ```
 User Input → Product Selection → Specs → Contact Info → Confirmation → Submission
                                                               ↓
                                             Email (SendGrid) OR WhatsApp (Deep Link)
 ```
 
-### Findings:
+### Findings
 
 | Feature | Status | File:Line |
 |---------|--------|-----------|
 | Conversation flow | ✅ Complete | `orca-assistant.js:189-212` |
-| WhatsApp link generation | ✅ Good | `orca-assistant.js:135-184` |
-| Photo upload (base64) | ✅ Good | `orca-assistant.js:863-887` |
-| Voice recording | ✅ Good | `orca-assistant.js:967-1107` |
+| WhatsApp link generation | ✅ Good | Uses `encodeURIComponent` |
+| Photo upload (base64) | ⚠️ Client-only validation | `orca-assistant.js:863-887` |
+| Voice recording | ⚠️ XSS risk | Transcript injected unescaped |
 | Form validation | ✅ Good | `orca-assistant.js:788-841` |
-| Contact info persistence | ✅ Good | `orca-assistant.js:761-784` (localStorage) |
-| escapeHtml utility | ⚠️ Defined but underused | `orca-assistant.js:126-130` |
+| escapeHtml utility | ❌ Unused | Defined but never called |
+| Order number | ⚠️ Bug | Regenerates on re-render |
 
 ---
 
-## 4. CODE QUALITY ISSUES
+## 5. CODE QUALITY ISSUES
 
-### 4.1 Dead/Unused Code
-| File | Line | Code | Issue |
-|------|------|------|-------|
-| `index.html` | 2291 | `const apiKey = "";` | Empty unused variable |
-| `index.html` | 2292-2293 | `calculateLoadWithAI()`, `toggleChat()` | Functions with `/* ... */` placeholder |
+### 5.1 Unused Helper Function
+- `escapeHtml()` at line 126-130 is defined but never used - critical code smell
 
-### 4.2 Duplicate Code Patterns
-- Rate limiting logic duplicated in `chat.js` and `send-order.js`
-- Consider extracting to shared utility
+### 5.2 Dead Code
+| File | Line | Code |
+|------|------|------|
+| `index.html` | 2291 | `const apiKey = "";` |
+| `index.html` | 2292-2293 | Placeholder functions |
 
-### 4.3 Hardcoded Values
+### 5.3 Hardcoded Values
 | Value | Locations |
 |-------|-----------|
-| `905336605802` (WhatsApp) | `orca-assistant.js:14`, multiple HTML files |
-| `orcaahsap@orcaahsap.com` | `orca-assistant.js:17`, `send-order.js:173-175` |
-| `0224 482 2892` | `orca-assistant.js:16`, multiple locations |
-
-**Recommendation:** Centralize configuration in a single config object.
-
----
-
-## 5. FILE STRUCTURE REVIEW
-
-### Current Structure
-```
-Orca-Project/
-├── .gitignore          ✅ Good - includes .env, node_modules
-├── index.html          ✅ Main homepage
-├── urunler.html        ✅ Products page
-├── pages/              ✅ Sub-pages
-│   ├── hakkimizda.html
-│   ├── iletisim.html
-│   ├── kariyer.html
-│   ├── kurumsal-bilgiler.html
-│   └── misyon-vizyon.html
-├── js/
-│   └── orca-assistant.js  ✅ Main chatbot logic
-├── css/
-│   ├── design-system.css  ✅ Global styles
-│   └── chat-widget.css    ✅ Chat-specific styles
-├── netlify/
-│   └── functions/
-│       ├── chat.js        ✅ Gemini proxy
-│       └── send-order.js  ✅ SendGrid handler
-├── assets/             ✅ Images and documents
-├── package.json        ✅ Dependencies
-├── DEPLOYMENT.md       ✅ Deployment guide
-├── README.md           ✅ Project overview
-└── push.sh             ⚠️ Should be removed or gitignored
-```
-
-### Missing Files
-| File | Purpose | Priority |
-|------|---------|----------|
-| `.env.example` | Environment variable template | HIGH |
-| `netlify.toml` | Netlify configuration | MEDIUM |
-| `.nvmrc` | Node version specification | LOW |
+| `905336605802` (WhatsApp) | `orca-assistant.js:14`, HTML files |
+| `orcaahsap@orcaahsap.com` | `orca-assistant.js:17`, `send-order.js` |
 
 ---
 
 ## 6. ACCESSIBILITY REVIEW
 
-### Findings:
-
 | Issue | Severity | Location |
 |-------|----------|----------|
-| Missing `aria-label` on icon buttons | Medium | Multiple close/action buttons |
-| Missing `aria-live` regions for chat | Medium | `orca-assistant.js` chat messages |
+| Missing `role="dialog"` on modal | Medium | Chat modal |
+| Missing `aria-modal="true"` | Medium | Chat modal |
+| No focus trap in modal | Medium | Keyboard users can tab out |
+| Close button lacks `aria-label` | Medium | Icon-only button |
 | Images have `alt` attributes | ✅ Good | Most images |
-| Form inputs have labels | ✅ Good | `orca-assistant.js` |
-| Focus management in modal | ⚠️ Partial | `index.html:2607` focuses input |
-
-### Recommended Fixes:
-```html
-<!-- Close button -->
-<button onclick="closeAIChat()" aria-label="Sohbeti kapat" class="...">
-    <i class="fa-solid fa-times" aria-hidden="true"></i>
-</button>
-
-<!-- Chat messages container -->
-<div id="chat-messages-new" role="log" aria-live="polite" aria-atomic="false">
-```
 
 ---
 
@@ -333,83 +316,71 @@ Orca-Project/
 
 | Area | Finding | Recommendation |
 |------|---------|----------------|
-| 3D rendering | Three.js loaded on every page | Consider lazy loading |
+| Base64 in memory | Large images stored as data URLs | Use `URL.createObjectURL()` for previews |
+| 3D rendering | Three.js loaded on every page | Lazy load on scroll |
 | Image sizes | Some images >1MB | Compress and use WebP |
-| CDN scripts | Multiple external scripts | Consider bundling |
-| Base64 photos | Up to 5MB sent as base64 | Consider direct upload to S3/Cloudinary |
 
 ---
 
-## 8. SPECIFIC ACTIONABLE FIXES
+## 8. ACTIONABLE FIXES (Priority Order)
 
-### Immediate (Do Now):
+### Immediate (Critical Security)
 
-1. **Remove dead code in index.html:2291-2293**
-```diff
-- const apiKey = "";
-- async function calculateLoadWithAI() { /* ... */ }
-- function toggleChat() { /* ... */ }
-```
+1. **Use escapeHtml() for all user content in renderConfirmScreen()**
+   - Lines 596-606: Escape name, company, phone, email, city
+   - Line 606: Escape product.notes
+   - Voice transcript: Escape before display
 
-2. **Remove or gitignore push.sh**
-```bash
-echo "push.sh" >> .gitignore
-rm push.sh
-```
+2. **Restrict CORS to your domain**
+   ```javascript
+   'Access-Control-Allow-Origin': 'https://orcaahsap.com.tr'
+   ```
 
-3. **Create .env.example**
-```env
-# Required for Netlify Functions
-SENDGRID_API_KEY=
-GEMINI_API_KEY=
-```
+3. **Sanitize email template content**
+   - Escape orderDetails, customerName, etc. in HTML emails
 
-### Short-term (This Week):
+### Short-term
 
-4. **Add escapeHtml to urunler.html modal**
-5. **Create netlify.toml with security headers**
-6. **Replace wildcard CORS with domain restriction**
-7. **Remove console.log debug statements**
+4. **Fix order number regeneration bug** - Generate once only
+5. **Add server-side attachment MIME validation**
+6. **Return generic error messages** - Don't expose error.message
+7. **Remove debug console.log statements**
 
-### Medium-term (This Month):
+### Medium-term
 
-8. **Implement persistent rate limiting (Upstash Redis)**
+8. **Implement persistent rate limiting** (Upstash Redis)
 9. **Add Content Security Policy**
-10. **Add SRI hashes to CDN scripts**
+10. **Add ARIA attributes for accessibility**
+11. **Create .env.example and netlify.toml**
 
 ---
 
 ## 9. POSITIVE FINDINGS
 
-The codebase demonstrates several good practices:
-
-1. ✅ **API keys properly stored in environment variables** - Not exposed in client code
-2. ✅ **Input validation present** - Email, phone, message length validation
-3. ✅ **CORS handling** - Proper OPTIONS preflight handling
-4. ✅ **Rate limiting attempted** - Shows security awareness (even if ineffective in serverless)
-5. ✅ **.gitignore properly configured** - Excludes .env and node_modules
-6. ✅ **Attachment size limits** - Prevents resource exhaustion
-7. ✅ **Error boundaries in client code** - Try-catch blocks for localStorage operations
-8. ✅ **User-friendly validation messages** - Turkish language error messages
-9. ✅ **Modern async/await patterns** - Clean asynchronous code
-10. ✅ **Mobile-first responsive design** - Proper media queries
+1. ✅ **API keys properly stored in environment variables**
+2. ✅ **Input validation present** - Email, phone, message length
+3. ✅ **.gitignore properly configured** - Excludes .env
+4. ✅ **Attachment size limits** - Prevents resource exhaustion
+5. ✅ **Modern async/await patterns** - Clean async code
+6. ✅ **Mobile-first responsive design** - Good CSS
+7. ✅ **WhatsApp links use encodeURIComponent** - Safe encoding
 
 ---
 
-## 10. OVERALL HEALTH SCORE: 7/10
+## 10. OVERALL HEALTH SCORE: 6.5/10
 
 | Category | Score | Notes |
 |----------|-------|-------|
-| Security | 6/10 | XSS risks, CORS too permissive |
-| Code Quality | 7/10 | Some dead code, console logs |
-| API Integration | 8/10 | Proper env vars, good validation |
-| Functionality | 9/10 | Complete feature set |
-| Performance | 7/10 | Large images, many CDN calls |
-| Accessibility | 5/10 | Missing ARIA labels |
+| Security | 5/10 | Critical XSS, open endpoints, email injection |
+| Code Quality | 7/10 | Dead code, unused helper, console logs |
+| API Integration | 7/10 | Proper env vars, but weak validation |
+| Functionality | 8/10 | Complete features, one bug (order number) |
+| Performance | 7/10 | Large base64 in memory |
+| Accessibility | 5/10 | Missing ARIA, focus management |
 | Documentation | 8/10 | Good README and DEPLOYMENT docs |
 
-**Summary:** The codebase is production-ready with moderate security improvements needed. The primary concerns are XSS vulnerabilities in dynamic HTML rendering and the ineffective serverless rate limiting. No critical secrets were found exposed in the codebase.
+**Summary:** The codebase has strong functionality but **critical XSS vulnerabilities** where the existing `escapeHtml()` helper is never used. The open serverless endpoints enable spam/abuse. Address the sanitization issues immediately before considering this production-ready.
 
 ---
 
-*Report generated by Claude Code Security Audit*
+*Report generated by Claude Code Security Audit - Updated with reconciled findings*
