@@ -186,6 +186,31 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Validate attachment content (server-side validation)
+    for (const att of attachments) {
+      if (att.content && !isValidBase64Image(att.content)) {
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': corsOrigin },
+          body: JSON.stringify({
+            success: false,
+            error: 'Invalid attachment format. Please upload valid image or audio files.'
+          })
+        };
+      }
+      // Validate type is one of allowed types
+      if (att.type && !['image', 'audio'].includes(att.type)) {
+        return {
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': corsOrigin },
+          body: JSON.stringify({
+            success: false,
+            error: 'Invalid attachment type. Only images and audio are allowed.'
+          })
+        };
+      }
+    }
+
     // Prepare email attachments (photos + audio)
     const emailAttachments = attachments.map(att => {
       // Determine MIME type
