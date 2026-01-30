@@ -287,10 +287,7 @@ User Input → Product Selection → Specs → Contact Info → Confirmation →
 - `escapeHtml()` at line 126-130 is defined but never used - critical code smell
 
 ### 5.2 Dead Code
-| File | Line | Code |
-|------|------|------|
-| `index.html` | 2291 | `const apiKey = "";` |
-| `index.html` | 2292-2293 | Placeholder functions |
+~~Previously had dead code in `index.html` - now removed.~~
 
 ### 5.3 Hardcoded Values
 | Value | Locations |
