@@ -211,16 +211,16 @@ function escapeHtml(text) {
 
 #### 3.4 CDN Scripts Without Subresource Integrity
 **File:** `index.html:11-18`
-**Risk:** If CDN is compromised, malicious code could be served.
-**Fix:** Add SRI hashes to CDN scripts.
+**Status:** ⚠️ Not implemented - SRI hashes require exact version matches and need to be regenerated when CDN libraries update. Incorrect hashes break the site entirely.
+**Note:** For dynamic CDNs like cdn.tailwindcss.com, SRI is not feasible as content changes. Consider self-hosting critical libraries if SRI is required.
 
 ---
 
-#### 3.5 Missing Configuration Files
-| File | Purpose | Priority |
-|------|---------|----------|
-| `.env.example` | Environment variable template | HIGH |
-| `netlify.toml` | Netlify config + security headers | MEDIUM |
+#### 3.5 Configuration Files
+| File | Purpose | Status |
+|------|---------|--------|
+| `.env.example` | Environment variable template | ✅ Created |
+| `netlify.toml` | Netlify config + security headers | ✅ Created |
 
 ---
 
